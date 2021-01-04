@@ -1,59 +1,13 @@
 # TFG
 
-## Semana 22 de Octubre
-Voy a probar el módulo PAM de Google Authenticator para añadir una capa extra de seguridad a la hora
-de acceder por SSH
+# Uso módulo PAM
 
-Sigo las instrucciones del pdf: https://drive.google.com/file/d/11rzhMdI5zVRcL1c9maBqCH7My_bAUls3/view?usp=sharing
+Compile and link PAM file to a libray system file:
 
-````
-vagrant@ubuntu-bionic:~$ google-authenticator
+``gcc -fPIC -fno-stack-protector -c src/pam_file.c -o bin/pam_file.o``
 
-Do you want authentication tokens to be time-based (y/n) y
-Warning: pasting the following URL into your browser exposes the OTP secret to Google:
-  https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl=otpauth://totp/vagrant@ubuntu-bionic%3Fsecret%3DFYXLU5QEFGIAMM7U53GQIJXT4A%26issuer%3Dubuntu-bionic
+``sudo ld -x --shared -o /lib/security/pam_file.so bin/pam_file.o``
 
-Your new secret key is: 
-Your verification code is 
-Your emergency scratch codes are:
+Test PAM test file:
 
-Do you want me to update your "/home/vagrant/.google_authenticator" file? (y/n) y
-
-Do you want to disallow multiple uses of the same authentication
-token? This restricts you to one login about every 30s, but it increases
-your chances to notice or even prevent man-in-the-middle attacks (y/n) y
-
-By default, a new token is generated every 30 seconds by the mobile app.
-In order to compensate for possible time-skew between the client and the server,
-we allow an extra token before and after the current time. This allows for a
-time skew of up to 30 seconds between authentication server and client. If you
-experience problems with poor time synchronization, you can increase the window
-from its default size of 3 permitted codes (one previous code, the current
-code, the next code) to 17 permitted codes (the 8 previous codes, the current
-code, and the 8 next codes). This will permit for a time skew of up to 4 minutes
-between client and server.
-Do you want to do so? (y/n) y
-
-If the computer that you are logging into isn't hardened against brute-force
-login attempts, you can enable rate-limiting for the authentication module.
-By default, this limits attackers to no more than 3 login attempts every 30s.
-Do you want to enable rate-limiting? (y/n) y
-````
-
-Al hacer SSH desde otra máquina, nos pide el código:
-
-````
-vagrant@wazuh-manager:~$ Connection to 127.0.0.1 closed by remote host.
-Connection to 127.0.0.1 closed.
-PS D:\Documents\GitHub\Wazuh\Vagrant>
-PS D:\Documents\GitHub\Wazuh\Vagrant>
-PS D:\Documents\GitHub\Wazuh\Vagrant>
-PS D:\Documents\GitHub\Wazuh\Vagrant> ssh vagrant@172.17.18.19
-The authenticity of host '172.17.18.19 (172.17.18.19)' can't be established.
-ECDSA key fingerprint is 
-Are you sure you want to continue connecting (yes/no)? yes
-Warning: Permanently added '172.17.18.19' (ECDSA) to the list of known hosts.
-Verification code:
-Password:
-Welcome to Ubuntu 18.04.5 LTS
-````
+``gcc -o bin/pam_test src/pam_test.c -lpam -lpam_misc``
