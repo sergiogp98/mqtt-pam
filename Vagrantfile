@@ -21,7 +21,7 @@ Vagrant.configure("2") do |config|
     (1..n_servers).each do |i|
         config.vm.define "server-#{i}" do |node|
             node.vm.network :private_network, ip: "#{server_net}#{i}"
-            node.vm.box = "ubuntu/bionic64"
+            node.vm.box = "ubuntu/focal64"
             node.vm.provider "virtualbox" do |pmv|
                 pmv.memory = 512
                 pmv.cpus   = 1
@@ -34,7 +34,7 @@ Vagrant.configure("2") do |config|
     (1..n_clients).each do |i|
         config.vm.define "client-#{i}" do |node|
             node.vm.network :private_network, ip: "#{client_net}#{i}"
-            node.vm.box = "ubuntu/bionic64"
+            node.vm.box = "ubuntu/focal64"
             node.vm.provider "virtualbox" do |pmv|
                 pmv.memory = 512
                 pmv.cpus   = 1
