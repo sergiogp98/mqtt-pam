@@ -19,3 +19,9 @@
 
 # Log files
 *.log
+
+# ELF files
+bin/
+
+# VSCode files
+.vscode/
