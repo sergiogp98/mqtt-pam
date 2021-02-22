@@ -1,16 +1,21 @@
 #include <stdio.h>
 #include <errno.h>
 #include <mosquitto.h>
+#include <stdlib.h>
 
 /*
 Use: ./challenge <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT> <CHALLENGE>
 */
 // Global vars
 
-#define mqtt_host "172.16.1.100"
-#define mqtt_port 1883
-#define keepalive 60
-#define PAYLOAD_SIZE 455
+//#define mqtt_host "172.16.1.100"
+//#define mqtt_port 1883
+#define KEEPALIVE 60
+#define PAYLOAD_SIZE 65
+#define COMMAND_SIZE 100
+#define QoS 1
+#define SHA256_SCRIPT_PATH "../sha256.sh"
+#define HASH_PATH "./hash.txt"
 
 //Function error handling
 void mosquitto_error_handler(int *retval) {
@@ -29,42 +34,39 @@ void mosquitto_error_handler(int *retval) {
         }
 }
 
-// Connect to broker
-
-// Send challenge to broker
-//libmosq_EXPORT send_challenge_to_broker(long char *challenge, struct mosquitto *mosq, const char *host, int port, int keepalive) {
-//        libmosq_EXPORT retval;
-//        retval = mosquitto_connect(mosq, host, port, keepalive);
-//        if (retval == MOSQ_ERR_SUCCESS) {
-//                //Publish message
-//		retval = mosquitto_publish(mosq, NULL, 
-//        } else if (retval == MOSQ_ERR_INVAL) {
-//                // Input parameter invalid
-//                fprintf(stderr, "Invalid parameter in mosquitto_connect()");
-//                exit(1);
-//        } else {
-//                //System call returned an error
-//                fprintf(stderr, "System call returned an error");
-//                exit(1);
-//	}
-//}
 // Main
 int main(int argc, char* argv[]) {
+        if (argc != 4) {
+                fprintf(stderr, "Usage: ./challenge <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT> <TOPIC>\n");
+                return 1;
+        }
+        
         struct mosquitto *mosq = NULL;
         int retval = 0;
-        char payload[] = "Any payload...";
-        char *topic = "server/ssh";
+        char *mqtt_host = argv[1];
+        int mqtt_port = atoi(argv[2]);
+        char *topic = argv[3];
+
+        char command[100];
+        snprintf(command, COMMAND_SIZE, "bash %s | tail -1 | awk -F['='] '{print $2}' > %s", SHA256_SCRIPT_PATH, HASH_PATH);
+        system(command);
+        char payload[PAYLOAD_SIZE];
+        FILE *fp;
+        fp = fopen(HASH_PATH, "r");
+        fscanf(fp, "%s", payload);
+        printf("payload: %s\n", payload);
+        printf("payload size: %ld\n", sizeof(payload));
 
         mosquitto_lib_init();
 
         mosq = mosquitto_new(NULL, true, 0);
 
         if (mosq) {
-                retval = mosquitto_connect(mosq, mqtt_host, mqtt_port, keepalive);
+                retval = mosquitto_connect(mosq, mqtt_host, mqtt_port, KEEPALIVE);
                 printf("mosquitto_connect(): ");
                 mosquitto_error_handler(&retval);
 
-                retval = mosquitto_publish(mosq, NULL, topic, sizeof(payload), payload, 0, false);
+                retval = mosquitto_publish(mosq, NULL, topic, sizeof(payload), payload, QoS, false);
                 printf("mosquitto_publish(): ");
                 mosquitto_error_handler(&retval);
         } else {
