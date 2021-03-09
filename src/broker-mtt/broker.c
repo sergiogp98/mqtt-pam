@@ -9,15 +9,15 @@
 #include <mosquitto.h>
 #include <errno.h>
 
-#define SERVER_TOPIC "/server/ssh"
-#define CLIENT_TOPIC "/client/ssh"
+#define RECEIVE_CHALLENGE_TOPIC "server/broker/challenge"
+#define RECEIVE_HASH_TOPIC "client/broker/hash"
+#define SEND_CHALLENGE_TOPIC "broker/client/challenge"
+#define SEND_HASH_TOPIC "broker/server/hash"
 #define MQTT_HOST "localhost"
 #define MQTT_PORT 1883
 #define KEEPALIVE 60
-#define QoS 0
-#define CLEAN_SESSION true
+#define QoS 1
 #define MAX_RECONNECTION_COUNTS 10
-
 
 void return_handler(const char *function, int retval)
 {
@@ -26,6 +26,7 @@ void return_handler(const char *function, int retval)
 
 void connect_callback(struct mosquitto *mosq, void *obj, int result)
 {
+	return_handler("mosquitto_connect", result);
 	if (result != MOSQ_ERR_SUCCESS)
 	{
 		int reconnection_count = 0;
@@ -44,48 +45,43 @@ void connect_callback(struct mosquitto *mosq, void *obj, int result)
 	}
 }
 
-void publish_callback(struct mosquitto *mosq, void *obj, int mid)
-{
-	printf("Successfully forward message %d\n", mid);
-}
-
 void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
-	struct mosquitto *forward = (struct mosquitto *)obj;
-	bool match_server_topic = 0;
+	bool match_dst_topic = 0;
 	int retval = 0;
 
-	mosquitto_topic_matches_sub(SERVER_TOPIC, message->topic, &match_server_topic);
-	mosquitto_loop_start(forward);
+	mosquitto_topic_matches_sub("+/broker/+", message->topic, &match_dst_topic);
 
-	if (match_server_topic)
+	if (match_dst_topic)
 	{
-		printf("Got challenge from server: %s\n", (char *)message->payload);
-		retval = mosquitto_publish(
-			forward,
-			NULL,
-			CLIENT_TOPIC,
-			message->payloadlen,
-			message->payload,
-			message->qos,
-			message->retain);
+		bool match_server_topic = 0;
+		mosquitto_topic_matches_sub(RECEIVE_CHALLENGE_TOPIC, message->topic, &match_server_topic);
+		if (match_server_topic)
+		{
+			printf("Got challenge from server: %s\n", (char *)message->payload);
+			retval = mosquitto_publish(
+				mosq,
+				NULL,
+				SEND_CHALLENGE_TOPIC,
+				message->payloadlen,
+				message->payload,
+				message->qos,
+				message->retain);
+		}
+		else
+		{
+			printf("Got hash from client: %s\n", (char *)message->payload);
+			retval = mosquitto_publish(
+				mosq,
+				NULL,
+				SEND_HASH_TOPIC,
+				message->payloadlen,
+				message->payload,
+				message->qos,
+				message->retain);
+		}
+		return_handler("mosquitto_publish", retval);
 	}
-	else
-	{
-		printf("Got hash from client: %s", (char *)message->payload);
-		retval = mosquitto_publish(
-			forward,
-			NULL,
-			SERVER_TOPIC,
-			message->payloadlen,
-			message->payload,
-			message->qos,
-			message->retain);
-	}
-	return_handler("mosquitto_publish (receiver)", retval);
-
-	mosquitto_disconnect(forward);
-	mosquitto_loop_stop(forward, false);
 }
 
 void log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
@@ -93,63 +89,51 @@ void log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
 	printf("%s\n", str);
 }
 
-void set_callbacks(struct mosquitto *mosq, const char *id)
+void set_callbacks(struct mosquitto *mosq)
 {
-	mosquitto_log_callback_set(mosq, log_callback);
 	mosquitto_connect_callback_set(mosq, connect_callback);
-	if (!strcmp(id, "listener"))
-	{
-		mosquitto_message_callback_set(mosq, message_callback);
-	}
-	else
-	{
-		mosquitto_publish_callback_set(mosq, publish_callback);
-	}
+	mosquitto_message_callback_set(mosq, message_callback);
+	mosquitto_log_callback_set(mosq, log_callback);
 }
 
-void initialise_mosquitto_instance(struct mosquitto *mosq, const char *id)
+int initialize_broker(struct mosquitto *mosq, const char *topics[])
 {
-	set_callbacks(mosq, id);
-	mosquitto_connect(mosq, MQTT_HOST, MQTT_PORT, KEEPALIVE);
-	mosquitto_subscribe(mosq, NULL, SERVER_TOPIC, QoS);
-	mosquitto_subscribe(mosq, NULL, CLIENT_TOPIC, QoS);
-}
+	int retval = 0;
 
-void create_mosquitto_instance(struct mosquitto *mosq, const char *id, void *obj) 
-{
-	char clientid[24];
-	memset(clientid, 0, 24);
-	snprintf(clientid, 23, "%s_%d", id, getpid());
-
-	if (obj != NULL)
+	set_callbacks(mosq);
+	retval = mosquitto_connect(mosq, MQTT_HOST, MQTT_PORT, KEEPALIVE);
+	if (retval == MOSQ_ERR_SUCCESS)
 	{
-		mosq = mosquitto_new(clientid, true, (struct mosquitto *)obj);
+		retval = mosquitto_subscribe_multiple(mosq, NULL, 4, (char *const *const)topics, QoS, 0, NULL);
 	}
-	else 
-	{
-		mosq = mosquitto_new(clientid, true, NULL);
-	}
+		
+	return retval;
 }
 
 int main(int argc, char *argv[])
 {
-	struct mosquitto *mosq;
-	
-	struct mosquitto *listener; // Mosquitto listener instance
-	struct mosquitto *forwarder; // Mosquitto forwarder instance
+	struct mosquitto *broker;
+	const char *topics[4] = {SEND_CHALLENGE_TOPIC, SEND_HASH_TOPIC, RECEIVE_CHALLENGE_TOPIC, RECEIVE_HASH_TOPIC};
+	int retval = 0;
 
 	mosquitto_lib_init();
 
-	create_mosquitto_instance(forwarder, "forwarder", NULL);
-	create_mosquitto_instance(listener, "listener", forwarder);
-	
-	if (listener)
+	broker = mosquitto_new("broker", true, NULL);
+
+	if (broker)
 	{
-		initialise_mosquitto_instance(listener, "listener");
-		initialise_mosquitto_instance(forwarder, "forwarder");
-		mosquitto_loop_start(listener);
-		mosquitto_loop_forever(listener, -1, 1);
-		mosquitto_destroy(listener);
+		retval = initialize_broker(broker, topics);
+		if (retval == MOSQ_ERR_SUCCESS)
+		{
+			mosquitto_loop_start(broker);
+			mosquitto_loop_forever(broker, -1, 1);
+			mosquitto_destroy(broker);
+		}
+		else
+		{
+			return_handler("intialize_broker", retval);
+			return 1;
+		}		
 	}
 	else
 	{
