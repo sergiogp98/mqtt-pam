@@ -7,7 +7,7 @@ Doc: https://www.gnu.org/software/libc/manual/html_mono/libc.html#Unpredictable-
 #include <unistd.h>
 #include <crypt.h>
 #include <string.h>
-#include "../lib/sha256.h"
+#include "../lib/sha.h"
 
 #define SECRET_PATH "./secret-word.txt"
 #define HASH_FUNCTION 512
