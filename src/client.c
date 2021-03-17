@@ -3,15 +3,16 @@
 #include <mosquitto.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define PAYLOAD_SIZE 65
 #define KEEPALIVE 60
 #define QoS 0
 #define CLIENT_ID_SIZE 24
-#define SECRET_WORD_PATH "./secret-word.txt"
+//#define SECRET_WORD_PATH "./client-secret.txt"
 #define SEND_HASH_TOPIC "client/broker/hash"
 #define RECEIVE_CHALLENGE_TOPIC "broker/client/challenge"
-#include "../lib/sha256.h"
+#include "../lib/sha.h"
 
 // Mosquitto subscribe callback
 int subscribe_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
 	int retval = 0;
 	char *broker_host = argv[1];
 	int broker_port = atoi(argv[2]);
-    char *secret = read_secret(SECRET_WORD_PATH);
+    //char *secret = read_secret(SECRET_WORD_PATH);
     
     mosquitto_lib_init();
 
@@ -105,7 +106,7 @@ int main(int argc, char *argv[])
         }
         else {
             printf("Got challenge from server: %s\n", (char *)challenge->payload);
-            char *hash = sha(secret, (char *)challenge->payload);
+            char *hash = sha("My_Secret_Word", (char *)challenge->payload);
             printf("Challenge's hash: %s\n", hash);
             if (hash[0] != 0)
             {

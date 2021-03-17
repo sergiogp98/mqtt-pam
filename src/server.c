@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <unistd.h>
 
 // Global vars
 
@@ -11,10 +12,10 @@
 #define PAYLOAD_SIZE 65
 #define CLIENT_ID_SIZE 24
 #define QoS 0
-#define SECRET_WORD_PATH "./secret-word.txt"
+//#define SECRET_WORD_PATH "./server-secret.txt"
 #define SEND_CHALLENGE_TOPIC "server/broker/challenge"
 #define RECEIVE_HASH_TOPIC "broker/server/hash"
-#include "../lib/sha256.h"
+#include "../lib/sha.h"
 
 // Manage signal
 void signal_handler(int sig)
@@ -103,11 +104,11 @@ int main(int argc, char *argv[])
 	int broker_port = atoi(argv[2]);
 	char *challenge = get_salt();
 	int challenge_size = get_salt_size();
-	char *secret = read_secret(SECRET_WORD_PATH);
+	//char *secret = read_secret(SECRET_WORD_PATH);
 
 	printf("challenge: %s\n", challenge); 
 	printf("size of challenge: %d\n", challenge_size);
-	printf("secret: %s\n", secret);
+	//printf("secret: %s\n", secret);
 	
 	mosquitto_lib_init();
 
@@ -123,7 +124,7 @@ int main(int argc, char *argv[])
 				KEEPALIVE, true, NULL, NULL, NULL, NULL);
 			if (hash != NULL)
 			{
-				if (!strcmp((char *)hash->payload, sha(secret, challenge)))
+				if (!strcmp((char *)hash->payload, sha("My_Secret_Word", challenge)))
 				{
 					printf("Hashes match!\n");
 				}
