@@ -1,5 +1,12 @@
 # TESTING
 
+## Install dependancies
+- mosquitto-clients
+- mosquitto 
+- libmosquitto-dev
+- libpam0g-dev
+- libssl-dev
+
 ## Compile sources
 
 ### Library (sha)
