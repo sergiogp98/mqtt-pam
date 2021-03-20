@@ -3,8 +3,10 @@
 #include <mosquitto.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <unistd.h>
+#include <security/pam_appl.h>
+#include <security/pam_modules.h>
+#include "../lib/crypt.h"
 
 // Global vars
 
@@ -12,16 +14,8 @@
 #define PAYLOAD_SIZE 65
 #define CLIENT_ID_SIZE 24
 #define QoS 0
-//#define SECRET_WORD_PATH "./server-secret.txt"
-#define SEND_CHALLENGE_TOPIC "server/broker/challenge"
-#define RECEIVE_HASH_TOPIC "broker/server/hash"
-#include "../lib/sha.h"
-
-// Manage signal
-void signal_handler(int sig)
-{
-	printf("You have presses Ctrl-C. Destroying mosquitto instance...");
-}
+#define SEND_CHALLENGE_TOPIC "pam/client/challenge"
+#define RECEIVE_HASH_TOPIC "client/pam/hash"
 
 // Mosquitto connect callback
 void connect_callback(struct mosquitto *mosq, void *obj, int result)
@@ -97,19 +91,18 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	struct mosquitto_message *hash;
 	struct mosquitto *server;
+	struct mosquitto_message *client_hash;
+	char *server_hash;
 	int retval = 0;
 	char *broker_host = argv[1];
 	int broker_port = atoi(argv[2]);
-	char *challenge = get_salt();
-	int challenge_size = get_salt_size();
-	//char *secret = read_secret(SECRET_WORD_PATH);
+	char *challenge = get_challenge();
+	int challenge_size = get_challenge_size();
 
 	printf("challenge: %s\n", challenge); 
 	printf("size of challenge: %d\n", challenge_size);
-	//printf("secret: %s\n", secret);
-	
+
 	mosquitto_lib_init();
 
 	server = create_instance(create_id("server"), broker_host, broker_port);
@@ -120,11 +113,14 @@ int main(int argc, char *argv[])
 		if (retval == MOSQ_ERR_SUCCESS)
 		{
 			retval = mosquitto_subscribe_simple(
-				&hash, true, true, RECEIVE_HASH_TOPIC, QoS, broker_host, broker_port, NULL,
+				&client_hash, true, true, RECEIVE_HASH_TOPIC, QoS, broker_host, broker_port, NULL,
 				KEEPALIVE, true, NULL, NULL, NULL, NULL);
-			if (hash != NULL)
+			if (client_hash != NULL)
 			{
-				if (!strcmp((char *)hash->payload, sha("My_Secret_Word", challenge)))
+				server_hash = sha512(challenge);
+				printf("server_hash: %s\n", server_hash);
+				printf("client_hash: %s\n", (char *)client_hash->payload);
+				if (!strcmp((char *)client_hash->payload, server_hash))
 				{
 					printf("Hashes match!\n");
 				}
@@ -138,7 +134,7 @@ int main(int argc, char *argv[])
 			{
 				fprintf(stderr, "%s = %d %s\n", "mosquitto_subscribe_simple", retval, mosquitto_strerror(retval));
 				return 1;
-			}
+			}	
 		}
 		else
 		{
