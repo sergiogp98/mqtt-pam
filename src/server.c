@@ -11,11 +11,16 @@
 // Global vars
 
 #define KEEPALIVE 60
-#define PAYLOAD_SIZE 65
-#define CLIENT_ID_SIZE 24
+#define TOPIC_SIZE 128
+#define CLIENT_ID_SIZE 32
 #define QoS 0
-#define SEND_CHALLENGE_TOPIC "pam/client/challenge"
-#define RECEIVE_HASH_TOPIC "client/pam/hash"
+
+static char client_id[CLIENT_ID_SIZE];
+static char get_client_id_topic[TOPIC_SIZE];
+static char get_hash_topic[TOPIC_SIZE];
+static char get_pubkey_topic[TOPIC_SIZE];
+static char send_challenge_topic[TOPIC_SIZE];
+
 
 // Mosquitto connect callback
 void connect_callback(struct mosquitto *mosq, void *obj, int result)
@@ -29,11 +34,7 @@ int subscribe_simple_callback(struct mosquitto *mosq, void *obj, const struct mo
 	printf("%s %s\n", (char *)message->topic, (char *)message->payload);
 }
 
-// Mosquitto publish callback
-void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
-{
-	printf("Send %s to %s\n", (char *)message->payload, message->topic);
-} 
+
 
 // Mosquitto log callback
 void log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
@@ -56,6 +57,43 @@ void set_callbacks(struct mosquitto *mosq, const char *host, const int port)
 	mosquitto_publish_callback_set(mosq, publish_callback);
 }
 
+
+// Mosquitto get_client_id callback
+void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+{
+	int retval = 0;
+
+	if (strcmp(message->topic, get_client_id_topic) == 0) // Client want to connect 
+	{
+		printf("Received client ID: %s\n", message->payload);
+		client_id = messsage->payload;
+		if (strlen(client_id) > 0)
+		{
+			memset(send_challenge_topic, 0, TOPIC_SIZE);
+			memset(get_hash_topic, 0, TOPIC_SIZE);
+			memset(get_pubkey_topic, 0, TOPIC_SIZE);
+			snprintf(send_challenge_topic, TOPIC_SIZE-1, "%s/pam/challenge", client_id);
+			snprintf(get_hash_topic, TOPIC_SIZE-1, "pam/%s/hash", client_id);
+			snprintf(get_pubkey_topic, TOPIC_SIZE-1, "pam/%s/pubkey", client_id);
+			//Multiple susbcribe
+			// Create challenge
+			// Send challenge
+		}
+		else
+		{
+			fprintf(stderr, "Bad client ID\n");
+		}
+	}
+	else if (strcmp(message->topic, get_hash_topic) == 0) // hash + pubkey
+	{
+
+	}
+	else
+	{
+		fprintf(stderr, "Unknow topic: %s", message->topic);
+	}
+}  
+
 const char *create_id(const char *name)
 {
     static char clientid[CLIENT_ID_SIZE];
@@ -72,7 +110,8 @@ struct mosquitto *create_instance(const char *id, const char *host, const int po
 
 	if (mosq)
 	{
-		set_callbacks(mosq, host, port);
+		mosquitto_message_callback_set(mosq, message_callback);
+		mosquitto_log_callback_set(mosq, log_callback);
 	}
 	else
 	{
@@ -91,63 +130,40 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	struct mosquitto *server;
-	struct mosquitto_message *client_hash;
-	char *server_hash;
+	struct mosquitto *broker;
 	int retval = 0;
 	char *broker_host = argv[1];
 	int broker_port = atoi(argv[2]);
-	char *challenge = get_challenge();
-	int challenge_size = get_challenge_size();
-
-	printf("challenge: %s\n", challenge); 
-	printf("size of challenge: %d\n", challenge_size);
+	
+	// Comprobacion host y port
 
 	mosquitto_lib_init();
 
-	server = create_instance(create_id("server"), broker_host, broker_port);
-	retval = mosquitto_connect(server, broker_host, broker_port, KEEPALIVE);
+	broker = create_instance(create_id("broker"), broker_host, broker_port);
+	retval = mosquitto_connect(broker, broker_host, broker_port, KEEPALIVE);
 	if (retval == MOSQ_ERR_SUCCESS)
 	{
-		retval = mosquitto_publish(server, NULL, SEND_CHALLENGE_TOPIC, challenge_size, challenge, QoS, false);
+		retval = mosquitto_subscribe(broker, NULL, get_client_id_topic, QoS);
 		if (retval == MOSQ_ERR_SUCCESS)
 		{
-			retval = mosquitto_subscribe_simple(
-				&client_hash, true, true, RECEIVE_HASH_TOPIC, QoS, broker_host, broker_port, NULL,
-				KEEPALIVE, true, NULL, NULL, NULL, NULL);
-			if (client_hash != NULL)
-			{
-				server_hash = sha512(challenge);
-				printf("server_hash: %s\n", server_hash);
-				printf("client_hash: %s\n", (char *)client_hash->payload);
-				if (!strcmp((char *)client_hash->payload, server_hash))
-				{
-					printf("Hashes match!\n");
-				}
-				else
-				{
-					fprintf(stderr, "Hashes do not match\n");
-					return 1;
-				}
-			}
-			else
-			{
-				fprintf(stderr, "%s = %d %s\n", "mosquitto_subscribe_simple", retval, mosquitto_strerror(retval));
-				return 1;
-			}	
+			printf("Listening to %s topic...\n", get_client_id_topic);
 		}
 		else
 		{
-			fprintf(stderr, "%s = %d %s\n", "mosquitto_subscribe_simple", retval, mosquitto_strerror(retval));
+			fprintf(stderr, "%s(%s) = %d %s\n", "mosquitto_subscribe", get_client_id_topic, retval, mosquitto_strerror(retval));
 			return 1;
 		}
 	}
 	else 
 	{
-		fprintf(stderr, "%s = %d %s\n", "mosquitto_subscribe_simple", retval, mosquitto_strerror(retval));
+		fprintf(stderr, "%s = %d %s\n", "mosquitto_connect", retval, mosquitto_strerror(retval));
 		return 1;
 	}
 	
+	mosquitto_loop_start(broker);
+	mosquitto_loop_forever(broker, -1, 1);
+	mosquitto_destroy(broker);
+
 	mosquitto_lib_cleanup();
 
 	return 0;
