@@ -20,11 +20,8 @@
 # Log files
 *.log
 
-# ELF files
+# ELF and object files
 bin/
-
-# Object files
-lib/
 
 # VSCode files
 .vscode/
