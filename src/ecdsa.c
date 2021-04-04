@@ -6,54 +6,17 @@
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <openssl/err.h>
 #include <stdio.h>
 
 #define ECCTYPE NID_secp521r1
 
-static int create_keys(EC_KEY *ec_key)
+typedef struct
 {
-    int retval = 1;
-    
-    ec_key = EC_KEY_new();
-    if (ec_key == NULL)
-    {
-        fprintf(stderr, "Failed to create new EC key\n");
-        retval = 0;
-    }
-    else
-    {
-        EC_GROUP *ec_group= EC_GROUP_new_by_curve_name(ECCTYPE);
-        if (NULL == ec_group)
-        {
-            fprintf(stderr, "Failed to create new EC Group\n");
-            retval = 0;
-        }
-        else
-        {
-            if(EC_KEY_set_group(ec_key, ec_group))
-            {
-                if (EC_KEY_generate_key(ec_key))
-                {
-                    printf("Successfully create EC key pair\n");
-                }
-                else
-                {
-                    fprintf(stderr, "Failed to generate EC Key\n");
-                    retval = 0;
-                }
-            }
-            else
-            {
-                fprintf(stderr, "Failed to set group for EC Key\n");
-                retval = 0;
-            }
-            EC_GROUP_free(ec_group);
-        }
-        EC_KEY_free(ec_key);
-    }
-
-    return retval;
-}
+    char *digest;
+	ECDSA_SIG *signature;
+	EC_KEY *pub_key;
+} Hash;
 
 void print_keys(EC_KEY *ec_key)
 {
@@ -65,33 +28,55 @@ void print_keys(EC_KEY *ec_key)
 
     pkey = EVP_PKEY_new();
     if (!EVP_PKEY_assign_EC_KEY(pkey, ec_key))
-        BIO_printf(outbio, "Error assigning ECC key to EVP_PKEY structure.");
+        BIO_printf(outbio, "Error assigning ECC key to EVP_PKEY structure\n");
     
     if(!PEM_write_bio_PrivateKey(outbio, pkey, NULL, NULL, 0, 0, NULL))
-        BIO_printf(outbio, "Error writing private key data in PEM format");
+        BIO_printf(outbio, "Error writing private key data in PEM format\n");
 
     if(!PEM_write_bio_PUBKEY(outbio, pkey))
-        BIO_printf(outbio, "Error writing public key data in PEM format");
+        BIO_printf(outbio, "Error writing public key data in PEM format\n");
 }
 
-static int ec_sign(const unsigned char *dgst, ECDSA_SIG *signature, EC_KEY *ec_key)
+int create_keys(EC_KEY *ec_key)
 {
     int retval = 1;
-
-    signature = ECDSA_do_sign(dgst, strlen(dgst), ec_key);
-    if (signature == NULL)
+    
+    if (EC_KEY_generate_key(ec_key))
     {
-        fprintf(stderr, "Failed to generate EC Signature\n");
+        printf("Successfully create EC key pair\n");
+    }
+    else
+    {
+        fprintf(stderr, "Failed to create EC key pair\n");
         retval = 0;
     }
 
     return retval;
 }
 
-static int ec_verify(const unsigned char *dgst, const ECDSA_SIG *signature, EC_KEY *ec_key)
+ECDSA_SIG *ec_sign(const unsigned char *dgst, EC_KEY *ec_key)
 {
     int retval = 1;
+    ECDSA_SIG *signature;
 
+    signature = ECDSA_do_sign(dgst, strlen(dgst), ec_key);
+    if (signature != NULL)
+    {
+        printf("Signed digest\n");
+    }
+    else
+    {
+        fprintf(stderr, "Failed to generate EC Signature\n");
+        retval = 0;
+    }
+
+    return signature;
+}
+
+int ec_verify(const unsigned char *dgst, const ECDSA_SIG *signature, EC_KEY *ec_key)
+{
+    int retval = 1;
+    
     if (ECDSA_do_verify(dgst, strlen(dgst), signature, ec_key))
     {
         printf("Verifed EC Signature\n");
@@ -105,27 +90,77 @@ static int ec_verify(const unsigned char *dgst, const ECDSA_SIG *signature, EC_K
     return retval;
 }
 
-static int create_signature(unsigned char* hash)
+/*EC_KEY *get_pub_key(const EC_KEY *ec_key)
 {
-    int retval = 1;
-    EC_KEY *myecc  = NULL;
+    EC_KEY *pub_key;
+    BN_CTX *ctx;
+    
+    if (EC_KEY_check_key(ec_key))
+    {
+        ctx = BN_CTX_new();
+        if (ctx != NULL)
+        {   
+            BN_CTX_start(ctx);
+            const unsigned char *pub_key_hex = EC_POINT_point2hex(
+                EC_KEY_get0_group(ec_key), 
+                EC_KEY_get0_public_key(ec_key),
+                POINT_CONVERSION_UNCOMPRESSED,
+                ctx
+            );
+            pub_key = EC_KEY_new_by_curve_name(ECCTYPE);
+            o2i_ECPublicKey(&pub_key, &pub_key_hex, strlen(pub_key_hex)); 
+            print_keys(pub_key);
+        }    
+        else
+        {
+            fprintf(stderr, "Failed to create BIGNUM variable\n");
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Invalid EC_KEY\n");
+    }
+
+    return pub_key;
+}*/
+
+Hash sign_hash(char* hash)
+{
+    int retval = 0;
+    EC_KEY *myecc;
+    ECDSA_SIG *signature;
+    Hash signed_hash;
 
     if (strlen(hash) > 0)   
     {
-        if (create_keys(myecc))
-        {   
-            ECDSA_SIG *signature;
-            if (ec_sign(hash, signature, myecc))
-            {
-                if (ec_verify(hash, signature, myecc))
-                {
-                    retval = 0;
-                }
-            }
+        myecc = EC_KEY_new_by_curve_name(ECCTYPE);
+        if (myecc == NULL)
+        {
+            fprintf(stderr, "Failed to create new EC key\n");
+            retval = 0;
         }
         else
-        {                 
-           fprintf(stderr, "Failed to generate EC Key\n");
+        {
+            if (create_keys(myecc))
+            {   
+                signature = ec_sign(hash, myecc);
+                if (signature != NULL)
+                {
+                    printf("Successfully signed hash\n");
+                    signed_hash.digest = hash;
+                    signed_hash.signature = signature;
+                    signed_hash.pub_key = myecc;
+                    retval = 1;    
+                }
+                else
+                {
+                    fprintf(stderr, "Failed to sign EC signature\n");
+                }
+            }
+            else
+            {                 
+                fprintf(stderr, "Failed to generate EC Key\n");
+            }   
         }
     }
     else
@@ -133,12 +168,22 @@ static int create_signature(unsigned char* hash)
         fprintf(stderr, "Empty hash to sign\n");
     }
 
-    return retval;
+    return signed_hash;
 }
 
 int main( int argc , char * argv[] )
 {
-    unsigned char hash[] = "c7fbca202a95a570285e3d700eb04ca2";
-    int status = create_signature(hash);
-    return status ;
+    char *hash = "c7fbca202a95a570285e3d700eb04ca2";
+    Hash signed_hash;
+    
+    signed_hash = sign_hash(hash);
+
+    if (EC_KEY_check_key(signed_hash.pub_key))
+    {
+        //printf("%s\n", signed_hash.digest);
+        //print_keys(signed_hash.pub_key);
+        ec_verify(signed_hash.digest, signed_hash.signature, signed_hash.pub_key);
+    }
+    
+    return 0;
 }
