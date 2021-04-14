@@ -1,5 +1,3 @@
-//compiled with gcc -g -lssl -UOPENSSL_NO_EC SO2228860.c -lcrypto
-
 #ifndef ECDSA_H_
 #define ECDSA_H_
 
@@ -9,20 +7,24 @@
 #define ECCTYPE NID_secp521r1
 #define ECDSA_SIG_SIZE 132
 
-struct Hash
+struct EC_PARAMS
 {
-    char digest[HASH_SIZE];
-	unsigned char *signature;
-	unsigned char *pub_key;
+	/* Pub key and signature encoded in DER and EC verification */
+	unsigned char *r; // ECDSA signature r value (hex format)
+	unsigned char *s; // ECDSA signature s value (HEX format)
+	unsigned char *pub_key; // EC_POINT (HEX format)
 };
 
 void print_keys(EC_KEY *ec_key);
 int create_keys(EC_KEY *ec_key);
-ECDSA_SIG *ec_sign(const unsigned char *dgst, EC_KEY *ec_key);
-EC_KEY *get_pub_key(const EC_KEY *ec_key);
-void initialize_Hash(struct Hash *signed_hash);
-int ec_verify(const unsigned char *digest, ECDSA_SIG *signature, EC_KEY *pub_key);
-struct Hash sign_hash(const char *hash);
-EC_KEY *ec_new_pubkey(const uint8_t *pub_bytes, size_t pub_len);
+ECDSA_SIG *ec_sign(const unsigned char *dgst, int len, EC_KEY *ec_key);
+int ec_verify(const unsigned char *digest, int len, ECDSA_SIG *signature, EC_KEY *pub_key);
+struct EC_PARAMS sign_hash(const unsigned char *hash, const int hash_len);
+char *pub_key_to_hex(const EC_KEY *ec_key);
+char *r_value_to_hex(const ECDSA_SIG *signature);
+char *s_value_to_hex(const ECDSA_SIG *signature);
+ECDSA_SIG *get_ec_sig(const char *r_hex, const char *s_hex);
+EC_KEY *get_ec_key(const unsigned char *ec_point_hex);
+void print_error(const char *label, unsigned long err);
 
 #endif
