@@ -1,23 +1,16 @@
-/*
-Doc: https://www.gnu.org/software/libc/manual/html_mono/libc.html#Unpredictable-Bytes
-https://www.openssl.org/docs/manmaster/man3/SHA512.html
-*/
-
 #include <stdio.h>
 #include <openssl/sha.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "../lib/crypt.h"
 
-#define CHALLENGE_SIZE 64
-
-char *sha512(const char *digest)
+char* sha512(const char *digest)
 {
-    static char buffer[128];
+    static char buffer[SHA512_DIGEST_LENGTH];
     if (digest == NULL)
     {
         fprintf(stderr, "Digest cannot be empty\n");
-
     }
     else 
     {
@@ -31,17 +24,12 @@ char *sha512(const char *digest)
         int i = 0;
         for (i = 0; i < SHA512_DIGEST_LENGTH; i++)
         {
-            sprintf(buffer + (i * 2), "%02x", hash[i]);
+            sprintf(buffer + i, "%02x", hash[i]);
         }
     }
     
     return buffer;
-}   
-
-const int get_challenge_size()
-{
-    return CHALLENGE_SIZE;
-}
+}  
 
 char *get_challenge()
 {

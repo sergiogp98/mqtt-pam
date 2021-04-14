@@ -9,15 +9,9 @@
 #include "../lib/crypt.h"
 #include "../lib/ecdsa.h"
 #include "../lib/utils.h"
+#include "../lib/mqtt.h"
 
 // Global vars
-
-#define KEEPALIVE 60
-#define TOPIC_SIZE 128
-#define ID_SIZE 32
-#define QoS 0
-#define CLIENT_ID_TOPIC "client/pam/id"
-#define GET_EC_PARAMS_TOPIC "+/pam/ec_params"
 
 static char *broker_host;
 static int broker_port;
@@ -35,32 +29,6 @@ int server_stop(struct mosquitto *mosq)
 	}
 						
 	return retval;
-}
-
-int server_start(struct mosquitto *mosq)
-{
-	int retval = 0;
-	struct mosquitto_message *message;
-
-	printf("Successfully start server\n");
-	
-	retval = mosquitto_subscribe(mosq, NULL, CLIENT_ID_TOPIC, QoS);
-	if (retval != MOSQ_ERR_SUCCESS)
-	{
-		fprintf(stderr, "%s(%s) = %d %s\n", "mosquitto_subscribe", CLIENT_ID_TOPIC, retval, mosquitto_strerror(retval));
-	}
-	else
-	{
-		printf("Listening to %s topic...\n", CLIENT_ID_TOPIC);
-	}
-
-	return retval;
-}
-
-// Mosquitto log callback
-void log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
-{
-	printf("%s\n", str);
 }
 
 // Mosquitto message callback
@@ -141,28 +109,25 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 	}
 }  
 
-// Set mosquitto instance to callbacks
-void set_callbacks(struct mosquitto *mosq, const char *host, const int port)
+int server_start(struct mosquitto *mosq)
 {
-	mosquitto_message_callback_set(mosq, message_callback);
-	//mosquitto_log_callback_set(mosq, log_callback);
-}
+	int retval = 0;
+	struct mosquitto_message *message;
 
-int connect_to_broker(struct mosquitto *mosq, const char *broker_host, const int broker_port)
-{
-    int retval = 0;
+	printf("Successfully start server\n");
 	
-	retval = mosquitto_connect(mosq, broker_host, broker_port, KEEPALIVE);
-    if (retval == MOSQ_ERR_SUCCESS)
-    {
-		set_callbacks(mosq, broker_host, broker_port);
-    }
+	retval = mosquitto_subscribe(mosq, NULL, CLIENT_ID_TOPIC, QoS);
+	if (retval == MOSQ_ERR_SUCCESS)
+	{
+		mosquitto_message_callback_set(mosq, message_callback);
+		printf("Listening to %s topic...\n", CLIENT_ID_TOPIC);
+	}
 	else
 	{
-		fprintf(stderr, "%s = %d %s\n", "mosquitto_connect", retval, mosquitto_strerror(retval));
+		fprintf(stderr, "%s(%s) = %d %s\n", "mosquitto_subscribe", CLIENT_ID_TOPIC, retval, mosquitto_strerror(retval));
 	}
 
-    return retval;
+	return retval;
 }
 
 // Main
@@ -194,7 +159,14 @@ int main(int argc, char *argv[])
 			{
 				mosquitto_loop_start(broker);
 				mosquitto_loop_forever(broker, -1, 1);
-				printf("Verify: %d\n", verify);
+				if (verify)
+				{
+					printf("PAM OK\n");
+				}
+				else
+				{
+					printf("PAM DENY\n");
+				}
 				retval = 1;
 			}
 			else

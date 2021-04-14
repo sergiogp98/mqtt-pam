@@ -43,12 +43,12 @@ int create_keys(EC_KEY *ec_key)
     return retval;
 }
 
-ECDSA_SIG *ec_sign(const unsigned char *dgst, EC_KEY *ec_key)
+ECDSA_SIG *ec_sign(const unsigned char *digest, int len, EC_KEY *ec_key)
 {
     int retval = 1;
     ECDSA_SIG *signature;
 
-    signature = ECDSA_do_sign(dgst, strlen(dgst), ec_key);
+    signature = ECDSA_do_sign(digest, len, ec_key);
     if (signature != NULL)
     {
         printf("Signed digest\n");
@@ -62,7 +62,7 @@ ECDSA_SIG *ec_sign(const unsigned char *dgst, EC_KEY *ec_key)
     return signature;
 }
 
-int ec_verify(const unsigned char *digest, ECDSA_SIG *signature, EC_KEY *pub_key)
+int ec_verify(const unsigned char *digest, int len, ECDSA_SIG *signature, EC_KEY *pub_key)
 {
     int retval = 1;
     
@@ -79,33 +79,11 @@ int ec_verify(const unsigned char *digest, ECDSA_SIG *signature, EC_KEY *pub_key
     return retval;
 }
 
-EC_KEY *ec_new_pubkey(const uint8_t *pub_bytes, size_t pub_len) {
-    EC_KEY *key;
-    const uint8_t *pub_bytes_copy;
-
-    key = EC_KEY_new_by_curve_name(ECCTYPE);
-    pub_bytes_copy = pub_bytes;
-    //d2i_EC_PUBKEY(&key, &pub_bytes_copy, pub_len);
-    o2i_ECPublicKey(&key, &pub_bytes_copy, pub_len);
-
-    return key;
-}
-
-char *der_to_hex(const char *label, const uint8_t *v, size_t len) {
-    size_t i;
-
-    printf("%s: ", label);
-    for (i = 0; i < len; ++i) {
-        printf("%02x", v[i]);
-    }
-    printf("\n");
-}
-
 char *pub_key_to_hex(const EC_KEY *ec_key)
 {
     int retval = 0;
     BN_CTX *ctx;
-    char *hex_pub_key = NULL;
+    char *hex_pub_key;
 
     ctx = BN_CTX_new();
     if(ctx) /* Handle error */
@@ -135,141 +113,138 @@ char *pub_key_to_hex(const EC_KEY *ec_key)
     return hex_pub_key;
 }
 
-int encode_pub_key_der(EC_KEY *ec_key, unsigned char **der_pub_key)
-{   
-    int num_bytes_copy = 0;
-
-    if ((num_bytes_copy = i2d_EC_PUBKEY(ec_key, der_pub_key)) > 0)
-    {
-        printf("Successfully encoded %d pub key bytes to DER format\n", num_bytes_copy);
-    }
-    else
-    {
-        fprintf(stderr, "Unable to encode pub key to DER format");
-    }
-
-    return num_bytes_copy;
-}
-
-int encode_ec_signature_der(ECDSA_SIG *signature, unsigned char **der_ec_signature)
-{   
-    int num_bytes_copy = 0;
-    
-    if ((num_bytes_copy = i2d_ECDSA_SIG(signature, der_ec_signature)) > 0)
-    {
-        printf("Successfully encode %d ec signature bytes to DER format\n", num_bytes_copy);
-    }
-    else
-    {
-        fprintf(stderr, "Unable to encode ec signature to DER format");
-    }
-
-    return num_bytes_copy;
-}
-
-int decode_pub_key_der(const unsigned char *der_ec_pub_key, int len, EC_KEY *ec_key)
+char *r_value_to_hex(const ECDSA_SIG *signature)
 {
-    int retval = 0;   
+    char *r_hex;
 
-    ec_key = d2i_EC_PUBKEY(NULL, &der_ec_pub_key, len);
-    
-    if (ec_key != NULL)
+    const BIGNUM *r_value = ECDSA_SIG_get0_r(signature);
+    if (r_value != NULL)
     {
-        printf("Successfully decode DER EC pub key to EC_KEY\n");
-        retval = 1;
+        r_hex = BN_bn2hex(r_value);
+        if (r_hex == NULL)
+        {
+            fprintf(stderr, "Failed to convert r value to hex format\n");
+        }
     }
     else
     {
-        fprintf(stderr, "Unable to decode DER EC pub key to EC_KEY");
+        fprintf(stderr, "Failed to get r value of EC signature\n");
     }
-    
-    return retval;
+
+    return r_hex;
 }
 
-int decode_ec_signature_der(const unsigned char *der_ec_signature, int len, ECDSA_SIG *signature)
+char *s_value_to_hex(const ECDSA_SIG *signature)
 {
-    int retval = 0;
+    char *s_hex;
 
-    signature = d2i_ECDSA_SIG(NULL, &der_ec_signature, len);
-
-    if (signature != NULL)
+    const BIGNUM *s_value = ECDSA_SIG_get0_s(signature);
+    if (s_value != NULL)
     {
-        printf("Successfully decode DER EC signauture to ECDSA_SIG\n");
-        retval = 1;
+        s_hex = BN_bn2hex(s_value);
+        if (s_hex == NULL)
+        {
+            fprintf(stderr, "Failed to convert r value to hex format\n");
+        }
     }
     else
     {
-        fprintf(stderr, "Unable to decode DER EC signature to ECDSA_SIG\n");
+        fprintf(stderr, "Failed to get r value of EC signature\n");
     }
 
-    return retval;
+    return s_hex;    
 }
 
-int sign_hash(const unsigned char *hash, const int len)
+ECDSA_SIG *get_ec_sig(const char *r_hex, const char *s_hex)
+{
+    ECDSA_SIG *signature = ECDSA_SIG_new();
+    BIGNUM *r = BN_new();
+    BIGNUM *s = BN_new();
+    
+    if (BN_hex2bn(&r, r_hex) > 0)
+    {
+        if (BN_hex2bn(&s, s_hex) > 0)
+        {
+            if (ECDSA_SIG_set0(signature, r, s) == 0)
+            {
+                fprintf(stderr, "Failed to set r and s values to EC signature\n");
+            }
+        }
+        else
+        {
+            fprintf(stderr, "Error converting s_hex value to BIGNUM\n");
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Error converting r_hex value to BIGNUM\n");
+    }
+
+    return signature;
+}
+
+void print_error(const char *label, unsigned long err)
+{
+    static char buffer[120 * sizeof(uint8_t)];
+    ERR_error_string(err, buffer);
+    fprintf(stderr, "%s: %s\n", label, buffer);
+}
+
+EC_KEY *get_ec_key(const unsigned char *ec_point_hex)
+{
+    EC_KEY *ec_key;
+    EC_POINT *ec_point;
+    BN_CTX *ctx;
+
+    ec_key = EC_KEY_new_by_curve_name(ECCTYPE);
+    ec_point = EC_POINT_new(EC_GROUP_new_by_curve_name(ECCTYPE));
+    ctx = BN_CTX_new();
+    if(ctx) /* Handle error */
+    {
+        ec_point = EC_POINT_hex2point(
+            EC_GROUP_new_by_curve_name(ECCTYPE),
+            ec_point_hex,
+            ec_point,
+            ctx
+        );
+
+        if (ec_point != NULL)
+        {
+            if (EC_KEY_set_public_key(ec_key, ec_point) == 0)
+            {
+                fprintf(stderr, "Failed to create EC_KEY with EC_POINT\n");
+            }
+        }
+        else
+        {
+            fprintf(stderr, "Failed to create EC_POINT with from HEX format\n");
+        }
+    }
+
+    return ec_key;
+}
+
+struct EC_PARAMS sign_hash(const unsigned char *hash, const int hash_len)
 {
     int retval = 0;
     EC_KEY *ec_key;
     ECDSA_SIG *signature;
-    uint8_t *der_pub_key, *der_pub_key_copy;
-    uint8_t *der_sig, *der_sig_copy;
-    size_t pub_key_len, sig_len;
-    
+    struct EC_PARAMS ec_params;
+    ec_params.r = NULL;
 
-    if (len > 0)
+    if (hash_len > 0)
     {
         ec_key = EC_KEY_new_by_curve_name(ECCTYPE);
         if (ec_key != NULL)
         {
             if (create_keys(ec_key))
             {
-                const EC_GROUP *ec_group = EC_KEY_get0_group(ec_key);
-                pub_key_len = EC_GROUP_get_degree(ec_group);
-                der_pub_key = calloc(pub_key_len, sizeof(uint8_t));
-                der_pub_key_copy = der_pub_key;
-
-                signature = ECDSA_do_sign(hash, len, ec_key);
-                //signature = ec_sign(hash, ec_key);
+                signature = ECDSA_do_sign(hash, hash_len, ec_key);
                 if (signature != NULL)
                 {
-                    printf("Successfully signed hash\n");
-                    printf("verify (pre): %d\n", ECDSA_do_verify(hash, len, signature, ec_key));
-                    sig_len = ECDSA_size(ec_key);
-                    der_sig = calloc(sig_len, sizeof(uint8_t));
-                    der_sig_copy = der_sig;
-
-                    i2d_ECDSA_SIG(signature, &der_sig_copy);
-                    der_to_hex("DER encoded sig", der_sig, sig_len);
-                    
-                    i2d_EC_PUBKEY(ec_key, &der_pub_key);
-                    der_to_hex("DER ecnoded pb key", der_pub_key, pub_key_len);
-                    
-                    const uint8_t *const_sig = der_sig;
-                    const uint8_t *const_pk = der_pub_key;
-                    signature = d2i_ECDSA_SIG(NULL, &const_sig, sig_len);
-                    if (signature != NULL)
-                    {
-                        EC_KEY *pub_key;
-                        pub_key = EC_KEY_new_by_curve_name(ECCTYPE);
-                        if (EC_KEY_set_public_key(pub_key, EC_KEY_get0_public_key(ec_key)))
-                        {
-                            printf("verify (post): %d\n", ECDSA_do_verify("agsdaeg", len, signature, pub_key));
-                        }
-                        else
-                        {
-                            printf("error d2i_EC_PUBKEY\n");
-                        }
-                    }
-                    else
-                    {
-                        printf("error d2i_ECDSA_SIG\n");
-                    }
-//
-                    //retval = 1;
-                    /*if (encode_pub_key_der(ec_key, &der_pub_key) > 0 &&
-                        encode_ec_signature_der(signature, &der_sig_copy) > 0)
-                    {
-                        retval = 1;          
-                    }*/
+                    ec_params.pub_key = pub_key_to_hex(ec_key);
+                    ec_params.r = r_value_to_hex(signature);
+                    ec_params.s = s_value_to_hex(signature);
                 }
                 else
                 {
@@ -294,7 +269,7 @@ int sign_hash(const unsigned char *hash, const int len)
     ECDSA_SIG_free(signature);
     EC_KEY_free(ec_key);
 
-    return retval;
+    return ec_params;
 }
 
 /*int main( int argc , char * argv[] )
