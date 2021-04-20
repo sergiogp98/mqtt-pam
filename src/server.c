@@ -82,9 +82,13 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 						{
 							if (ECDSA_do_verify(challenge_hash, HASH_SIZE, signature, ec_key))
 							{
+								printf("PAM OK\n");
 								verify = 1;
 							}
-							server_stop(mosq);
+							else
+							{
+								printf("PAM DENY\n");
+							}
 						}
 					}
 				}
@@ -135,11 +139,11 @@ int main(int argc, char *argv[])
 {
 	if (argc != 3)
 	{
-		fprintf(stderr, "Usage: ./challenge <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT>\n");
+		fprintf(stderr, "Usage: ./server <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT>\n");
 		return 1;
 	}
 
-	struct mosquitto *broker = NULL;
+	struct mosquitto *server = NULL;
 	int retval = 0;
 	
 	// Comprobacion host y port
@@ -150,24 +154,15 @@ int main(int argc, char *argv[])
 	mosquitto_lib_init();
 
 	set_id(server_id, ID_SIZE, "server");
-	broker = mosquitto_new(server_id, true, NULL);
-	if (broker)
+	server = mosquitto_new(server_id, true, NULL);
+	if (server)
 	{
-		if (connect_to_broker(broker, broker_host, broker_port) == MOSQ_ERR_SUCCESS)
+		if (connect_to_broker(server, broker_host, broker_port) == MOSQ_ERR_SUCCESS)
 		{
-			if (server_start(broker) == MOSQ_ERR_SUCCESS)
+			if (server_start(server) == MOSQ_ERR_SUCCESS)
 			{
-				mosquitto_loop_start(broker);
-				mosquitto_loop_forever(broker, -1, 1);
-				if (verify)
-				{
-					printf("PAM OK\n");
-				}
-				else
-				{
-					printf("PAM DENY\n");
-				}
-				retval = 1;
+				mosquitto_loop_start(server);
+				mosquitto_loop_forever(server, -1, 1);				
 			}
 			else
 			{
@@ -179,7 +174,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Unable to connect to broker\n");
 		}
 
-		mosquitto_destroy(broker);
+		mosquitto_destroy(server);
 	}
 	else
 	{

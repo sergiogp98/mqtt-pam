@@ -75,7 +75,7 @@ int client_start(struct mosquitto *mosq)
     // Subscribe to challenge topic
     retval = mosquitto_subscribe(mosq, NULL, get_challenge_topic, QoS);
     if (retval == MOSQ_ERR_SUCCESS)
-    {
+    {   
         retval = mosquitto_publish(mosq, NULL, CLIENT_ID_TOPIC, strlen(client_id), client_id, QoS, false);
         if (retval == MOSQ_ERR_SUCCESS)
         {
