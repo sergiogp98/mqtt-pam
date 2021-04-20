@@ -8,10 +8,11 @@
 #define CLIENT_ID_TOPIC "client/pam/id"
 #define CHALLENGE_TOPIC "pam/+/challenge"
 #define GET_EC_PARAMS_TOPIC "+/pam/ec_params"
-#define ENABLE_LOGS 0
+#define ENABLE_LOGS 1
 
-void set_callbacks(struct mosquitto *mosq, const char *host, const int port);
+#include <mosquitto.h>
+
 void log_callback(struct mosquitto *mosq, void *obj, int level, const char *str);
-int connect_to_broker(struct mosquitto *broker, const char *broker_host, const int broker_port);
+int connect_to_broker(struct mosquitto *mosq, const char *broker_host, const int broker_port);
 
 #endif

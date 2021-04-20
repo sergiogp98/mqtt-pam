@@ -10,8 +10,8 @@ https://www.openssl.org/docs/manmaster/man3/SHA512.html
 
 #define CHALLENGE_SIZE 64
 #define HASH_SIZE SHA512_DIGEST_LENGTH
- 
-char *sha512(const char *digest);
+
+char* sha512(const char *digest);
 char *get_challenge();
 
 #endif
