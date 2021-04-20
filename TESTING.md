@@ -1,6 +1,8 @@
 # TESTING
 
 ## Install dependancies
+- gcc
+
 - mosquitto-clients
 - mosquitto 
 - libmosquitto-dev
@@ -34,3 +36,7 @@ gcc broker.c -lmosquitto -o bin/broker
 ## Link PAM module 
 gcc -fPIC -fno-stack-protector -c src/mypam.c -o bin/mypam.o 
 sudo ld -x --shared -o /lib/security/mypam.so bin/mypam.o 
+
+## Crypt src files
+gcc -c -g src/ecdsa.c -o bin/ecdsa.o
+gcc bin/ecdsa.o -g -lcrypto -lssl -o bin/ecdsa
