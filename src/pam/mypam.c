@@ -4,11 +4,11 @@
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <mosquitto.h>
-//#include "../lib/server.h"
-//#include "../lib/crypt.h"
-//#include "../lib/ecdsa.h"
-//#include "../lib/utils.h"
-//#include "../lib/mqtt.h"
+//#include "../include/server.h"
+//#include "../include/crypt.h"
+//#include "../include/ecdsa.h"
+//#include "../include/utils.h"
+//#include "../include/mqtt.h"
 
 //static char server_id[ID_SIZE];
 
