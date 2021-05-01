@@ -55,4 +55,5 @@ char *create_uuid() {
 
     return uuid;
 }
+
 #endif
