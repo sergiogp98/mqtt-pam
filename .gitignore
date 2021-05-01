@@ -22,8 +22,12 @@
 
 # ELF and object files
 bin/
+obj/
 
 # VSCode files
 .vscode/
 
+# Doc files
+*.aux
+*.dvi
 
