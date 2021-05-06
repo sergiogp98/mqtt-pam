@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
+#include "../include/utils.h"
 
 #define ECCTYPE NID_secp521r1
 #define ECDSA_SIG_SIZE 132
@@ -357,7 +359,7 @@ EC_KEY *read_pub_key_from_pem(const char *pemfile)
 		bio = BIO_new(BIO_s_file());
 		bio = BIO_new_fp(file, BIO_NOCLOSE);
 		pub_key = EC_KEY_new_by_curve_name(ECCTYPE);
-		PEM_red_bio_EC_PUBKEY(bio, &pub_key, NULL, NULL);
+		PEM_read_bio_EC_PUBKEY(bio, &pub_key, NULL, NULL);
 	}
 	else
 	{
@@ -370,7 +372,7 @@ EC_KEY *read_pub_key_from_pem(const char *pemfile)
 EC_KEY *get_pub_key(const char *username)
 {
 	EC_KEY *pub_key;
-	struct stat *stat;
+	struct stat *file_stat;
 	char *anubis;
 	char *pemfile;
 	DIR *dir;
@@ -385,9 +387,9 @@ EC_KEY *get_pub_key(const char *username)
 	if (dir != NULL)
 	{	
 		// Read all files in .anubis directoy until pub file found
-		while ((file = readdir(mydir)) != NULL && !more_than_one)
+		while ((file = readdir(dir)) != NULL && !more_than_one)
 		{
-			stat(file->d_name, &stat);
+			stat(file->d_name, file_stat);
 			/* Check few things on each file:
 				- is a regular file
 				- is not empty
@@ -395,11 +397,11 @@ EC_KEY *get_pub_key(const char *username)
 				- has an UUID as filename
 				- has .pub extension
 			*/
-			if (S_ISREG(stat->st_mode) && stat->st_size > 0 && check_uuid_regex(file->d_name))
+			if (S_ISREG(file_stat->st_mode) && file_stat->st_size > 0 && check_uuid_regex(file->d_name))
 			{
-				if (stat->st_size > 0)
-
-					if (stat->st_mode & S_IRUSR)
+				if (file_stat->st_size > 0)
+				{
+					if (file_stat->st_mode & S_IRUSR)
 					{
 						if (!found) // There is more than one uuid.pub file
 						{
@@ -438,7 +440,8 @@ EC_KEY *get_pub_key(const char *username)
 	}
 	else
 	{
-		perror("Error opening %s: %s\n", anubis, errno);
+		const char *err_msg = strcat("Error opening", anubis);
+		perror(err_msg);
 	}
 
 	return pub_key;
