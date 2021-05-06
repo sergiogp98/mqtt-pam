@@ -23,8 +23,8 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 {
     int retval = 0;
     bool topic_match = false;
-    static char send_ec_sign_r_topic[TOPIC_SIZE];
-    static char send_ec_sign_s_topic[TOPIC_SIZE];
+    static char send_r_topic[TOPIC_SIZE];
+    static char send_s_topic[TOPIC_SIZE];
     static char challenge[CHALLENGE_SIZE];
     static char challenge_hash[HASH_SIZE];
     struct EC_SIGN ec_sign;
@@ -44,13 +44,13 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
             // Sign challenge hash
             ec_sign = sign_hash(challenge_hash, HASH_SIZE);
 
-            // Create hash topic
-            set_topic(send_ec_sign_r_topic, TOPIC_SIZE, client_id, "pam", "r");
-            set_topic(send_ec_sign_s_topic, TOPIC_SIZE, client_id, "pam", "s");
-            
+            // Create ec_sign values topics
+            set_topic(send_r_topic, TOPIC_SIZE, client_id, "pam", "r");
+            set_topic(send_s_topic, TOPIC_SIZE, client_id, "pam", "s");
+
             // Send ec_param values to client
-            mosquitto_publish(mosq, NULL, send_ec_sign_r_topic, strlen(ec_sign.r), ec_sign.r, QoS, false);
-            mosquitto_publish(mosq, NULL, send_ec_sign_s_topic, strlen(ec_sign.s), ec_sign.s, QoS, false);
+            mosquitto_publish(mosq, NULL, send_r_topic, strlen(ec_sign.r), ec_sign.r, QoS, false);
+            mosquitto_publish(mosq, NULL, send_s_topic, strlen(ec_sign.s), ec_sign.s, QoS, false);
         }
         else
         {
@@ -64,6 +64,12 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 
     mosquitto_message_free((struct mosquitto_message **) message);
 
+}
+
+void set_callbacks(struct mosquitto *mosq)
+{
+	mosquitto_message_callback_set(mosq, message_callback);
+	mosquitto_log_callback_set(mosq, log_callback);
 }
 
 int client_start(struct mosquitto *mosq)
@@ -114,6 +120,7 @@ int main(int argc, char *argv[])
     client = mosquitto_new(client_id, true, NULL);
     if (client)
     {
+        set_callbacks(client);
         if (connect_to_broker(client, broker_host, broker_port) == MOSQ_ERR_SUCCESS)
         {
             if (client_start(client) != MOSQ_ERR_SUCCESS)

@@ -13,16 +13,17 @@
 
 // Global vars
 
-#define BROKER_HOST "broker.mqtt.com"
-#define BROKER_PORT 1883
 #define UUID "21fb034c-c837-407a-a585-cee50ed9a74c"
 
+static char *broker_host;
+static int broker_port;
 static char server_id[ID_SIZE];
 static int verify = 0;
-static char *challenge = NULL;
+char *challenge;
 static char *username = NULL;
-static int get_r_value = 0;
-static int get_s_value = 0;
+int get_r_value = 0;
+int get_s_value = 0;
+struct EC_SIGN sign;
 
 int server_stop(struct mosquitto *mosq)
 {
@@ -40,27 +41,32 @@ int server_stop(struct mosquitto *mosq)
 // Mosquitto message callback
 void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
-	int retval = 0;
+	//int retval = 0;
 	int verified = 0;
-	bool r_value_topic_match = false;
-	bool s_value_topic_match = false;
+	bool match_r_value_topic;
+	bool match_s_value_topic;
 	static char challenge_hash[HASH_SIZE];
-	char *r_hex, *s_hex;
+	//char *r_hex, *s_hex;
 	ECDSA_SIG *signature;
 	EC_KEY *pub_key;
 
-	mosquitto_topic_matches_sub("+/pam/r", message->topic, &r_value_topic_match);
-	mosquitto_topic_matches_sub("+/pam/s", message->topic, &s_value_topic_match);
+	mosquitto_topic_matches_sub("+/pam/r", message->topic, &match_r_value_topic);
+	mosquitto_topic_matches_sub("+/pam/s", message->topic, &match_s_value_topic);
 
-	if (r_value_topic_match)
-	{
-		r_hex = (char *)message->payload;
+	if (match_r_value_topic)
+	{	
+		// Initialize ec_sign values
+		sign.r = calloc(message->payloadlen, sizeof(char));
+		//set_buffer(r_hex, strlen((char *)message->payload), (char *)message->payload);
+		strcpy(sign.r, (char *)message->payload);
 		get_r_value = 1;
 	}
 
-	if (s_value_topic_match)
+	if (match_s_value_topic)
 	{
-		s_hex = (char *)message->payload;
+		sign.s = calloc(message->payloadlen, sizeof(char));
+		strcpy(sign.s, (char *)message->payload);
+		//s_hex = (char *)message->payload;
 		get_s_value = 1;
 	}
 
@@ -68,14 +74,14 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 	{
 		set_buffer(challenge_hash, HASH_SIZE, sha512(challenge));
 
-		if ((signature = get_ec_sig(r_hex, s_hex)) != NULL)
+		if ((signature = get_ec_sig(sign.r, sign.s)) != NULL)
 		{
-			if ((pub_key = get_pub_key(username)) != NULL) // Get Pub-key from pem file in user .anubis directory
+			if ((pub_key = get_pub_key("client-1")) != NULL) // Get Pub-key from pem file in user .anubis directory
 			{
 				if (ECDSA_do_verify(challenge_hash, HASH_SIZE, signature, pub_key))
 				{
 					printf("Successfully verified\n");
-					verify = 1;
+					verified = 1;
 				}
 				else
 				{
@@ -87,41 +93,46 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 	}
 }  
 
+void set_callbacks(struct mosquitto *mosq)
+{
+	mosquitto_message_callback_set(mosq, message_callback);
+	mosquitto_log_callback_set(mosq, log_callback);
+}
+
 int server_start(struct mosquitto *mosq)
 {
 	int retval = 0;
-	struct mosquitto_message *message;
-	static char get_ec_sign_r_topic[TOPIC_SIZE];
-	static char get_ec_sign_s_topic[TOPIC_SIZE];
+	struct mosquitto_message *messages;
+	static char get_r_topic[TOPIC_SIZE];
+	static char get_s_topic[TOPIC_SIZE];
 	static char send_challenge_topic[TOPIC_SIZE];
-
+	
 	// Initialize challenge topics
-	set_topic(get_ec_sign_r_topic, TOPIC_SIZE, UUID, "pam", "r");
-	set_topic(get_ec_sign_s_topic, TOPIC_SIZE, UUID, "pam", "s");
+	set_topic(get_r_topic, TOPIC_SIZE, UUID, "pam", "r");
+	set_topic(get_s_topic, TOPIC_SIZE, UUID, "pam", "s");
 	set_topic(send_challenge_topic, TOPIC_SIZE, "pam", UUID, "challenge");
-	const char *topics[2] = {get_ec_sign_r_topic, get_ec_sign_s_topic};
 
-	// Subscribe to ec_sign topic
-	retval = mosquitto_subscribe_multiple(mosq, NULL, 2, (char *const *const)topics, QoS, NULL, NULL);
-	if (retval == MOSQ_ERR_SUCCESS)
-	{
-		// Create challenge
-		set_buffer(challenge, CHALLENGE_SIZE, get_challenge());
+	// Subscribe to ec sign values topics
+	const char *topics[2] = {get_r_topic, get_s_topic};
+	mosquitto_subscribe_multiple(mosq, NULL, 2, (char *const *const)topics, QoS, 0, NULL);
 
-		// Send challenge
-		retval = mosquitto_publish(mosq, NULL, send_challenge_topic, CHALLENGE_SIZE, challenge, QoS, false);
-		if (retval == MOSQ_ERR_SUCCESS)
-		{
-			retval = 1;
-		}
-		else
-		{
-			fprintf(stderr, "%s(%s) = %d %s\n", "mosquitto_publish", send_challenge_topic, retval, mosquitto_strerror(retval))
-		}
-	}
-	else
+	// Create challenge
+	challenge = calloc(CHALLENGE_SIZE, sizeof(char));
+	set_buffer(challenge, CHALLENGE_SIZE, get_challenge());
+
+	// Send challenge
+	retval = mosquitto_publish(mosq, NULL, send_challenge_topic, CHALLENGE_SIZE, challenge, QoS, false);
+	if (retval != MOSQ_ERR_SUCCESS)
 	{
-		fprintf(stderr, "%s(%s) = %d %s\n", "mosquitto_subscribe", ec_sign_topic, retval, mosquitto_strerror(retval));
+		fprintf(stderr, "%s(%s) = %d %s\n", "mosquitto_publish", send_challenge_topic, retval, mosquitto_strerror(retval));
+		
+		/*retval = mosquitto_subscribe_simple(&messages, 2, true, get_ec_sign_topic, QoS, broker_host, 
+											broker_port, server_id, KEEPALIVE, true, NULL, NULL, 
+											NULL, NULL);
+		if (retval != MOSQ_ERR_SUCCESS)
+		{
+			fprintf(stderr, "%s(%s) = %d %s\n", "mosquitto_subscribe_simple", send_challenge_topic, retval, mosquitto_strerror(retval));
+		}*/
 	}
 
 	return retval;
@@ -130,21 +141,33 @@ int server_start(struct mosquitto *mosq)
 // Main
 int main(int argc, char *argv[])
 {
-	struct mosquitto *broker = NULL;
-	int retval = 0;
+	if (argc != 3)
+    {
+        fprintf(stderr, "Usage: ./challenge <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT>\n");
+        return 1;
+    }
+
+    struct mosquitto *server = NULL;
+    int retval = 0;
+
+    // Check host and port
+
+    broker_host = argv[1];
+    broker_port = atoi(argv[2]);
 
 	mosquitto_lib_init();
 
 	set_id(server_id, ID_SIZE, "server");
-	broker = mosquitto_new(server_id, true, NULL);
-	if (broker)
+	server = mosquitto_new(server_id, true, NULL);
+	if (server)
 	{
-		if (connect_to_broker(broker, BROKER_HOST, BROKER_PORT) == MOSQ_ERR_SUCCESS)
+		set_callbacks(server);
+		if (connect_to_broker(server, broker_host, broker_port) == MOSQ_ERR_SUCCESS)
 		{
-			if (server_start(broker) == MOSQ_ERR_SUCCESS)
+			if (server_start(server) == MOSQ_ERR_SUCCESS)
 			{
-				mosquitto_loop_start(broker);
-				mosquitto_loop_forever(broker, -1, 1);
+				mosquitto_loop_start(server);
+				mosquitto_loop_forever(server, -1, 1);
 				if (verify)
 				{
 					printf("PAM OK\n");
@@ -165,7 +188,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Unable to connect to broker\n");
 		}
 
-		mosquitto_destroy(broker);
+		mosquitto_destroy(server);
 	}
 	else
 	{
