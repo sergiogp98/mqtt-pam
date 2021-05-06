@@ -27,7 +27,7 @@ void set_buffer(char buffer[], const int size, const char *dgst)
 
 int check_uuid_regex(const char *file)
 {
-    const char *exp = "[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*.pub"
+    const char *exp = "[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*.pub";
     int found = 0;
     int value;
     regex_t regex;
