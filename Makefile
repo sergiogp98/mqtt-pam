@@ -17,11 +17,17 @@ OBJ = $(patsubst %, %.o, $(_FILES))
 
 SRC = $(patsubst %, %.c, $(_FILES))
 
+$(OBJ_DIR)/identification.o: src/identification.c $(DEPS)
+	$(CC)  -c -o $@ $< $(CFLAGS)
+
 $(OBJ_DIR)/client.o: src/client.c $(DEPS)
 	$(CC)  -c -o $@ $< $(CFLAGS)
 
 $(OBJ_DIR)/server.o: src/server.c $(DEPS)
 	$(CC)  -c -o $@ $< $(CFLAGS)
+
+$(BIN_DIR)/identification: $(OBJ_DIR)/identification.o 
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 $(BIN_DIR)/server: $(OBJ_DIR)/server.o 
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
@@ -30,7 +36,7 @@ $(BIN_DIR)/client: $(OBJ_DIR)/client.o
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 all: $(BIN_DIR)/client $(BIN_DIR)/server
- 
+id: $(BIN_DIR)/identification
 .PHONY: clean
 
 clean:
