@@ -10,17 +10,16 @@
 #include "../include/ecdsa.h"
 #include "../include/utils.h"
 #include "../include/mqtt.h"
+#include "../include/uuid.h"
+
+#define ANUBIS "/home/%s/.anubis/%s.pub"
 
 // Global vars
 
-#define UUID "21fb034c-c837-407a-a585-cee50ed9a74c"
-
-static char *broker_host;
-static int broker_port;
-static char server_id[ID_SIZE];
 static int verify = 0;
-char *challenge;
-static char *username = NULL;
+static char challenge[CHALLENGE_SIZE];
+static char username[MAX_USERNAME_LEN];
+static char uuid[UUID_STR_LEN];
 int get_r_value = 0;
 int get_s_value = 0;
 struct EC_SIGN sign;
@@ -41,12 +40,10 @@ int server_stop(struct mosquitto *mosq)
 // Mosquitto message callback
 void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
-	//int retval = 0;
-	int verified = 0;
 	bool match_r_value_topic;
 	bool match_s_value_topic;
 	static char challenge_hash[HASH_SIZE];
-	//char *r_hex, *s_hex;
+	static char pemfile[MAX_PATH_LEN];
 	ECDSA_SIG *signature;
 	EC_KEY *pub_key;
 
@@ -57,7 +54,6 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 	{	
 		// Initialize ec_sign values
 		sign.r = calloc(message->payloadlen, sizeof(char));
-		//set_buffer(r_hex, strlen((char *)message->payload), (char *)message->payload);
 		strcpy(sign.r, (char *)message->payload);
 		get_r_value = 1;
 	}
@@ -66,7 +62,6 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 	{
 		sign.s = calloc(message->payloadlen, sizeof(char));
 		strcpy(sign.s, (char *)message->payload);
-		//s_hex = (char *)message->payload;
 		get_s_value = 1;
 	}
 
@@ -76,12 +71,15 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 
 		if ((signature = get_ec_sig(sign.r, sign.s)) != NULL)
 		{
-			if ((pub_key = get_pub_key("client-1")) != NULL) // Get Pub-key from pem file in user .anubis directory
+			set_buffer(username, MAX_USERNAME_LEN, "client-1");
+			sprintf(pemfile, ANUBIS, username, uuid);
+			pub_key = get_pub_key_from_pem(pemfile); // Get Pub-key from pem file in user .anubis directory
+			if (pub_key != NULL) 
 			{
 				if (ECDSA_do_verify(challenge_hash, HASH_SIZE, signature, pub_key))
 				{
 					printf("Successfully verified\n");
-					verified = 1;
+					verify = 1;
 				}
 				else
 				{
@@ -108,16 +106,15 @@ int server_start(struct mosquitto *mosq)
 	static char send_challenge_topic[TOPIC_SIZE];
 	
 	// Initialize challenge topics
-	set_topic(get_r_topic, TOPIC_SIZE, UUID, "pam", "r");
-	set_topic(get_s_topic, TOPIC_SIZE, UUID, "pam", "s");
-	set_topic(send_challenge_topic, TOPIC_SIZE, "pam", UUID, "challenge");
+	set_topic(get_r_topic, TOPIC_SIZE, uuid, "pam", "r");
+	set_topic(get_s_topic, TOPIC_SIZE, uuid, "pam", "s");
+	set_topic(send_challenge_topic, TOPIC_SIZE, "pam", uuid, "challenge");
 
 	// Subscribe to ec sign values topics
 	const char *topics[2] = {get_r_topic, get_s_topic};
 	mosquitto_subscribe_multiple(mosq, NULL, 2, (char *const *const)topics, QoS, 0, NULL);
 
 	// Create challenge
-	challenge = calloc(CHALLENGE_SIZE, sizeof(char));
 	set_buffer(challenge, CHALLENGE_SIZE, get_challenge());
 
 	// Send challenge
@@ -125,14 +122,6 @@ int server_start(struct mosquitto *mosq)
 	if (retval != MOSQ_ERR_SUCCESS)
 	{
 		fprintf(stderr, "%s(%s) = %d %s\n", "mosquitto_publish", send_challenge_topic, retval, mosquitto_strerror(retval));
-		
-		/*retval = mosquitto_subscribe_simple(&messages, 2, true, get_ec_sign_topic, QoS, broker_host, 
-											broker_port, server_id, KEEPALIVE, true, NULL, NULL, 
-											NULL, NULL);
-		if (retval != MOSQ_ERR_SUCCESS)
-		{
-			fprintf(stderr, "%s(%s) = %d %s\n", "mosquitto_subscribe_simple", send_challenge_topic, retval, mosquitto_strerror(retval));
-		}*/
 	}
 
 	return retval;
@@ -147,14 +136,21 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+	char server_id[ID_SIZE];
+	char broker_host[MAX_HOSTNAME_LEN];
+	int broker_port = 0;
     struct mosquitto *server = NULL;
     int retval = 0;
 
     // Check host and port
 
-    broker_host = argv[1];
+    set_buffer(broker_host, ID_SIZE, argv[1]);
     broker_port = atoi(argv[2]);
-
+	
+	// Get UUID from username
+	//uuid = get_uuid(username);
+	strcpy(uuid, "68263723-e928-4f71-8339-c609478f0a1a");
+	
 	mosquitto_lib_init();
 
 	set_id(server_id, ID_SIZE, "server");

@@ -14,9 +14,7 @@
 #include <security/pam_modules.h>
 
 // Global vars
-static char *broker_host;
-static int broker_port;
-const char *client_id = "21fb034c-c837-407a-a585-cee50ed9a74c";
+static char uuid[UUID_STR_LEN];
 
 // Mosquitto message callback
 void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
@@ -27,6 +25,7 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
     static char send_s_topic[TOPIC_SIZE];
     static char challenge[CHALLENGE_SIZE];
     static char challenge_hash[HASH_SIZE];
+    static char pemfile[MAX_PATH_LEN];
     struct EC_SIGN ec_sign;
 
     mosquitto_topic_matches_sub(CHALLENGE_TOPIC, message->topic, &topic_match);
@@ -42,11 +41,12 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
             set_buffer(challenge_hash, HASH_SIZE, sha512(challenge));
 
             // Sign challenge hash
-            ec_sign = sign_hash(challenge_hash, HASH_SIZE);
+            sprintf(pemfile, "%s/.anubis/%s.key", getenv("HOME"), uuid);
+            ec_sign = sign_hash(challenge_hash, HASH_SIZE, pemfile);
 
             // Create ec_sign values topics
-            set_topic(send_r_topic, TOPIC_SIZE, client_id, "pam", "r");
-            set_topic(send_s_topic, TOPIC_SIZE, client_id, "pam", "s");
+            set_topic(send_r_topic, TOPIC_SIZE, uuid, "pam", "r");
+            set_topic(send_s_topic, TOPIC_SIZE, uuid, "pam", "s");
 
             // Send ec_param values to client
             mosquitto_publish(mosq, NULL, send_r_topic, strlen(ec_sign.r), ec_sign.r, QoS, false);
@@ -78,7 +78,7 @@ int client_start(struct mosquitto *mosq)
     static char get_challenge_topic[TOPIC_SIZE];
 
     // Create challenge topic
-    set_topic(get_challenge_topic, TOPIC_SIZE, "pam", client_id, "challenge");
+    set_topic(get_challenge_topic, TOPIC_SIZE, "pam", uuid, "challenge");
 
     // Subscribe to challenge topic
     retval = mosquitto_subscribe(mosq, NULL, get_challenge_topic, QoS);
@@ -97,27 +97,25 @@ int client_start(struct mosquitto *mosq)
 // Main
 int main(int argc, char *argv[])
 {
-    if (argc != 3)
+    if (argc != 4)
     {
-        fprintf(stderr, "Usage: ./challenge <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT>\n");
+        fprintf(stderr, "Usage: ./challenge <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT> <UUID>\n");
         return 1;
     }
 
+    char broker_host[ID_SIZE];
+    int broker_port = 0;
     struct mosquitto *client = NULL;
     int retval = 0;
 
     // Check host and port
-
-    broker_host = argv[1];
+    set_buffer(broker_host, ID_SIZE, argv[1]);
     broker_port = atoi(argv[2]);
-
+    set_buffer(uuid, UUID_STR_LEN+1, argv[3]);
+    
     mosquitto_lib_init();
 
-    // Set client-1 with uuid pem file in .anubis
-    //strcpy(client_id, create_uuid());
-
-    //set_id(client_id, ID_SIZE, "client");
-    client = mosquitto_new(client_id, true, NULL);
+    client = mosquitto_new(uuid, true, NULL);
     if (client)
     {
         set_callbacks(client);
