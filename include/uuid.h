@@ -1,12 +1,10 @@
-#ifndef UUID_H_
-#define UUID_H_
-
 /* For malloc() */
 #include <stdlib.h>
 /* For puts()/printf() */
 #include <stdio.h>
 /* For uuid_generate() and uuid_unparse() */
 #include <uuid/uuid.h>
+
 
 /* Uncomment to always generate capital UUIDs. */
 //#define capitaluuid true
@@ -55,5 +53,3 @@ char *create_uuid() {
 
     return uuid;
 }
-
-#endif

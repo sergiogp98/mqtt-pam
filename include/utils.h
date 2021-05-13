@@ -7,6 +7,10 @@
 #include <unistd.h>
 #include <regex.h>
 
+#define MAX_USERNAME_LEN 32
+#define MAX_HOSTNAME_LEN HOST_NAME_MAX
+#define MAX_PATH_LEN 100
+
 void set_id(char buffer[], const int size, const char *id)
 {
     memset(buffer, 0, size);
@@ -27,7 +31,7 @@ void set_buffer(char buffer[], const int size, const char *dgst)
 
 int check_uuid_regex(const char *file)
 {
-    const char *exp = "[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*.pub";
+    const char *exp = "[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*.*";
     int found = 0;
     int value;
     regex_t regex;
@@ -44,6 +48,41 @@ int check_uuid_regex(const char *file)
     }
 
     return found;
+}
+
+const char *get_extension(const char *filename)
+{
+    char *ret;
+    const char point = '.';
+
+    ret = strrchr(filename, point);
+
+    return ret;
+}
+
+int check_extension(const char *filename, const char *ext)
+{  
+    return strcmp(get_extension(filename), ext) == 0;
+}
+
+char *get_filename(char *filename)
+{
+    char *name;
+    const char slash[2] = "/";
+    char *token;
+
+    // Get filename of path filename
+    token = strtok(filename, slash);
+    while (token != NULL)
+    {
+        token = strtok(NULL, slash);
+    }
+
+    // Get name of file without extension
+    const char *ext = get_extension(token);
+    name = strtok(token, ext);
+    
+    return name;
 }
 
 #endif
