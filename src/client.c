@@ -33,8 +33,8 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
     if (topic_match) // Server sends challenge
     {
         printf("Received challenge: %s\n", (char *)message->payload);
-        //set_buffer(challenge, CHALLENGE_SIZE, (char *)message->payload);
-        set_buffer(challenge, CHALLENGE_SIZE, "gasdgadhgoashpo");
+        set_buffer(challenge, CHALLENGE_SIZE, (char *)message->payload);
+        
         if (strlen(challenge) > 0)
         {
             // Create challenge hash
