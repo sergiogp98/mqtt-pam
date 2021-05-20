@@ -39,4 +39,13 @@ int connect_to_broker(struct mosquitto *mosq, const char *broker_host, const int
     return retval;
 }
 
+void stop_mosq(struct mosquitto *mosq)
+{
+	printf("Exiting...\n");
+	if (mosquitto_disconnect(mosq) != MOSQ_ERR_SUCCESS)
+	{
+		fprintf(stderr, "Unable to stop server\n");
+	}
+}
+
 #endif
