@@ -33,8 +33,8 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
     if (topic_match) // Server sends challenge
     {
         printf("Received challenge: %s\n", (char *)message->payload);
-        set_buffer(challenge, CHALLENGE_SIZE, (char *)message->payload);
-
+        //set_buffer(challenge, CHALLENGE_SIZE, (char *)message->payload);
+        set_buffer(challenge, CHALLENGE_SIZE, "gasdgadhgoashpo");
         if (strlen(challenge) > 0)
         {
             // Create challenge hash
@@ -51,6 +51,9 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
             // Send ec_param values to client
             mosquitto_publish(mosq, NULL, send_r_topic, strlen(ec_sign.r), ec_sign.r, QoS, false);
             mosquitto_publish(mosq, NULL, send_s_topic, strlen(ec_sign.s), ec_sign.s, QoS, false);
+
+            // Stop client
+            stop_mosq(mosq);
         }
         else
         {
@@ -99,7 +102,7 @@ int main(int argc, char *argv[])
 {
     if (argc != 4)
     {
-        fprintf(stderr, "Usage: ./challenge <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT> <UUID>\n");
+        fprintf(stderr, "Usage: ./client <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT> <UUID>\n");
         return 1;
     }
 

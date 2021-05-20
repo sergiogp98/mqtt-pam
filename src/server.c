@@ -24,18 +24,7 @@ int get_r_value = 0;
 int get_s_value = 0;
 struct EC_SIGN sign;
 
-int server_stop(struct mosquitto *mosq)
-{
-	int retval = 0;
 
-	printf("Exiting...\n");
-	if (mosquitto_disconnect(mosq) != MOSQ_ERR_SUCCESS)
-	{
-		fprintf(stderr, "Unable to stop server\n");
-	}
-						
-	return retval;
-}
 
 // Mosquitto message callback
 void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
@@ -85,7 +74,7 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 				{
 					printf("Failed verification\n");
 				}
-				server_stop(mosq);
+				stop_mosq(mosq);
 			}
 		}
 	}
@@ -132,7 +121,7 @@ int main(int argc, char *argv[])
 {
 	if (argc != 3)
     {
-        fprintf(stderr, "Usage: ./challenge <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT>\n");
+        fprintf(stderr, "Usage: ./server <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT>\n");
         return 1;
     }
 
@@ -167,12 +156,14 @@ int main(int argc, char *argv[])
 				if (verify)
 				{
 					printf("PAM OK\n");
+					retval = PAM_SUCCESS;
 				}
 				else
 				{
 					printf("PAM DENY\n");
+					retval = PAM_AUTH_ERR;
 				}
-				retval = 1;
+				
 			}
 			else
 			{
