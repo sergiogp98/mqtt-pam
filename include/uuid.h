@@ -1,3 +1,6 @@
+#ifndef UUID_H_
+#define UUID_H_
+
 /* For malloc() */
 #include <stdlib.h>
 /* For puts()/printf() */
@@ -5,6 +8,15 @@
 /* For uuid_generate() and uuid_unparse() */
 #include <uuid/uuid.h>
 
+#define UUID_CSV "/etc/anubis/uuid.csv"
+#define MAX_USERS 128
+#define LINE_LEN 128
+
+struct USER_UUID
+{
+    char *user;
+    char *uuid;
+};
 
 /* Uncomment to always generate capital UUIDs. */
 //#define capitaluuid true
@@ -53,3 +65,45 @@ char *create_uuid() {
 
     return uuid;
 }
+
+char *get_uuid(char *filename, const char *username)
+{
+    FILE *file;
+    int i;
+    char line[LINE_LEN];
+    const char delim[2] = ",";
+    int found = 0;
+    char *tok;
+    struct USER_UUID data;
+
+    // Open CSV file
+    file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        perror("Error opening file");
+        exit(1);
+    }
+
+    while (fgets(line, LINE_LEN, file) != NULL && !found)
+    {
+        // Get username
+        tok = strtok(line, delim);
+        data.user = tok;
+
+        // Compare user
+        if (strcmp(data.user, username) == 0)
+        {
+            // Get UUID
+            tok = strtok(NULL, delim);
+            tok[strlen(tok)-1] = 0; //remove final "\n"
+            data.uuid = tok;
+            found = 1;
+        }        
+    }
+
+    fclose(file);
+
+    return data.uuid;
+}
+
+#endif 
