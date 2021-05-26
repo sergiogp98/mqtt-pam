@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     // Check host and port
     set_buffer(broker_host, ID_SIZE, argv[1]);
     broker_port = atoi(argv[2]);
-    set_buffer(uuid, UUID_STR_LEN+1, argv[3]);
+    set_buffer(uuid, UUID_STR_LEN, argv[3]);
     
     mosquitto_lib_init();
 
