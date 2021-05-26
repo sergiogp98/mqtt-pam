@@ -11,8 +11,10 @@
 #include "../include/utils.h"
 #include "../include/mqtt.h"
 #include "../include/uuid.h"
+#include "../include/file.h"
 
 #define ANUBIS "/home/%s/.anubis/%s.pub"
+#define UUID_CSV "/etc/anubis/uuid.csv"
 
 // Global vars
 
@@ -65,14 +67,18 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 			pub_key = get_pub_key_from_pem(pemfile); // Get Pub-key from pem file in user .anubis directory
 			if (pub_key != NULL) 
 			{
-				if (ECDSA_do_verify(challenge_hash, HASH_SIZE, signature, pub_key))
+				verify = ECDSA_do_verify(challenge_hash, HASH_SIZE, signature, pub_key);
+				switch (verify)
 				{
+				case -1:
+					fprintf(stderr, "Verification error\n");
+					break;
+				case 0:
+					fprintf(stderr, "Invalid signature\n");
+					break;
+				default:
 					printf("Successfully verified\n");
-					verify = 1;
-				}
-				else
-				{
-					printf("Failed verification\n");
+					break;
 				}
 				stop_mosq(mosq);
 			}
@@ -130,16 +136,24 @@ int main(int argc, char *argv[])
 	int broker_port = 0;
     struct mosquitto *server = NULL;
     int retval = 0;
-
+	
     // Check host and port
 
     set_buffer(broker_host, ID_SIZE, argv[1]);
     broker_port = atoi(argv[2]);
-	
+
 	// Get UUID from username
-	//uuid = get_uuid(username);
-	strcpy(uuid, "68263723-e928-4f71-8339-c609478f0a1a");
-	
+	set_buffer(uuid, UUID_STR_LEN, get_uuid(UUID_CSV, "client-1"));
+	if (uuid != NULL)
+	{
+		printf("Found UUID in user %s: %s\n", "client-1", uuid);
+	}
+	else
+	{
+		fprintf(stderr, "User %s has not and UUID assigned\n", "client-1");
+		exit(1);
+	}
+
 	mosquitto_lib_init();
 
 	set_id(server_id, ID_SIZE, "server");
@@ -153,17 +167,16 @@ int main(int argc, char *argv[])
 			{
 				mosquitto_loop_start(server);
 				mosquitto_loop_forever(server, -1, 1);
-				if (verify)
-				{
-					printf("PAM OK\n");
-					retval = PAM_SUCCESS;
-				}
-				else
+				if (verify != 1)
 				{
 					printf("PAM DENY\n");
 					retval = PAM_AUTH_ERR;
 				}
-				
+				else
+				{
+					printf("PAM OK\n");
+					retval = PAM_SUCCESS;
+				}
 			}
 			else
 			{
