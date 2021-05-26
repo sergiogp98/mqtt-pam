@@ -19,7 +19,6 @@ end
 
 Vagrant.configure("2") do |config|
     config.vm.synced_folder ".", "/home/vagrant/tfg"
-    config.vm.boot_timeout = 600
 
     (1..n_servers).each do |i|
         config.vm.define "server-#{i}" do |node|
