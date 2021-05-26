@@ -26,7 +26,7 @@ void set_topic(char buffer[], const int size, const char *src, const char *dst, 
 void set_buffer(char buffer[], const int size, const char *dgst)
 {
     memset(buffer, 0, size);
-    snprintf(buffer, size-1, "%s", dgst);
+    snprintf(buffer, size, "%s", dgst);
 }
 
 int check_uuid_regex(const char *file)
