@@ -15,7 +15,7 @@ void create_pem_filenames(const char *name, char *pub_key, char *priv_key)
     strcpy(pub_key, anubis);
     strcpy(priv_key, anubis);
     strcat(strcat(pub_key, name), ".pub");
-    strcat(strcat(priv_key, name), ".key");  
+    strcat(strcat(priv_key, name), ".key");
 }
 
 int main(int argc, const char *argv)
@@ -23,10 +23,10 @@ int main(int argc, const char *argv)
     const char *uuid = create_uuid();
     char *pem_dir = strcat(getenv("HOME"), "/.anubis");
     struct stat *st;
-    char *buf; 
+    char *buf;
     int retval = 1;
     char *pub_key, *priv_key;
-    
+
     if (stat(pem_dir, st) == -1)
     {
         mkdir(pem_dir, MODE);
@@ -37,7 +37,7 @@ int main(int argc, const char *argv)
     pub_key = calloc(len, sizeof(char));
     sprintf(priv_key, "%s/%s.%s", pem_dir, uuid, "key");
     sprintf(pub_key, "%s/%s.%s", pem_dir, uuid, "pub");
-    
+
     FILE *file;
     EC_KEY *ec_key;
 
