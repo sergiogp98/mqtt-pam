@@ -222,7 +222,7 @@ char *s_value_to_hex(const ECDSA_SIG *signature)
 
 ECDSA_SIG *get_ec_sig(const char *r_hex, const char *s_hex)
 {
-    ECDSA_SIG *signature = ECDSA_SIG_new();
+    ECDSA_SIG *signature = NULL;
     BIGNUM *r = BN_new();
     BIGNUM *s = BN_new();
 
@@ -230,6 +230,7 @@ ECDSA_SIG *get_ec_sig(const char *r_hex, const char *s_hex)
     {
         if (BN_hex2bn(&s, s_hex) > 0)
         {
+            signature = ECDSA_SIG_new();
             if (ECDSA_SIG_set0(signature, r, s) == 0)
             {
                 fprintf(stderr, "Failed to set r and s values to EC signature\n");
