@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 
 void write_file(const char *file, const char *mode, const char *dgst)
 {
