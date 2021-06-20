@@ -1,0 +1,188 @@
+\documentclass[a4paper,twoside,11pt,titlepage]{report}
+
+%------------------ PACKAGES ------------------------%
+
+\usepackage{listings}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[pdfborder={000}]{hyperref}
+\usepackage{url}
+\usepackage{longtable}
+\usepackage{fancyhdr}
+\usepackage{colortbl}
+\usepackage{graphicx}
+\usepackage{xspace}
+\usepackage[nottoc]{tocbibind}
+\usepackage[acronym,toc]{glossaries}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{pgfplots}
+\pgfplotsset{
+  compat=1.12,
+}
+\usepackage{graphicx}
+\usepackage{float}
+
+\decimalpoint
+\usepackage{dcolumn}
+\newcolumntype{.}{D{.}{\esperiod}{-1}}
+\makeatletter
+\addto\shorthandsspanish{\let\esperiod\es@period@code}
+\makeatother
+
+\usepackage{graphicx} %package to manage images
+\graphicspath{ {imagenes/} }
+
+\usepackage{hyperref}
+
+\usepackage{appendix}
+\renewcommand{\appendixname}{Anexos}
+\renewcommand{\appendixtocname}{Anexos}
+\renewcommand{\appendixpagename}{Anexos}
+
+%------------------ REUSABLE INFORMATION ------------------------%
+
+\newcommand{\myTitle}{Sistema de autenticación de doble factor basado en Criptografía de Curva Elíptica\xspace}
+\newcommand{\myTitleEN}{Double authentication factor system based on Elliptic Curve Criptography\xspace}
+\newcommand{\myDegree}{Grado en Ingeniería Informática\xspace}
+\newcommand{\myName}{Sergio García Prados\xspace}
+\newcommand{\myProf}{Prof. Dr. Antonio Francisco Díaz García\xspace}
+\newcommand{\myFaculty}{Escuela Técnica Superior de Ingenierías Informática y de Telecomunicación\xspace}
+\newcommand{\myFacultyShort}{E.T.S. de Ingenierías Informática y de Telecomunicación\xspace}
+\newcommand{\myDepartment}{Departamento de Arquitectura y Tecnoloía de Computadores\xspace}
+\newcommand{\myUni}{\protect{Universidad de Granada}\xspace}
+\newcommand{\myLocation}{Granada\xspace}
+\newcommand{\myTime}{\today\xspace}
+\newcommand{\myVersion}{Version 0.1\xspace}
+\newcommand{\myKeywords}{Criptografía, Sistemas operativos, C, Pluggable Authentication Module, Autenticación, Message Queuing Telemetry Transport, Seguridad, Criptografía de Curva Elíptica, Algoritmo de Firma Digital de Curva Elíptica, Computación del Altas Prestaciones, Nube\xspace}
+\newcommand{\myKeywordsEN}{Criptography, Operative System, C, Pluggable Authentication Module, Authentication, Message Queuing Telemetry Transport, Security, Elliptic Curve Criptography, Elliptic Curve Digital Signature Algorithm, High Performance Computing, Cloud}
+
+%------------------ HEADERS AND FOOTERS ------------------------%
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LO]{\leftmark}
+\fancyhead[RE]{\rightmark}
+\fancyhead[RO,LE]{\textbf{\thepage}}
+\renewcommand{\chaptermark}[1]{\markboth{\textbf{#1}}{}}
+\renewcommand{\sectionmark}[1]{\markright{\textbf{\thesection. #1}}}
+
+%------------------ PAGE STYLE ------------------------%
+
+\setlength{\headheight}{1.5\headheight}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+%------------------ EXMAPLES AND DEFINITIONS ------------------------%
+\newtheorem{ejemplo}{Ejemplo}[chapter]
+\newtheorem{definicion}{Definición}[chapter]
+
+%------------------ COLORS ------------------------%
+\definecolor{gray97}{gray}{.97}
+\definecolor{gray45}{gray}{.45}
+\definecolor{gray30}{gray}{.94}
+
+%------------------ NON-FORMATTED TEXT ------------------------%
+
+\lstset{ frame=Ltb,
+    framerule=0.5pt,
+    aboveskip=0.5cm,
+    framextopmargin=3pt,
+    framexbottommargin=3pt,
+    framexleftmargin=0.1cm,
+    framesep=0pt,
+    rulesep=.4pt,
+    backgroundcolor=\color{gray97},
+    rulesepcolor=\color{black},
+    %
+    stringstyle=\ttfamily,
+    showstringspaces = false,
+    basicstyle=\scriptsize\ttfamily,
+    commentstyle=\color{gray45},
+    keywordstyle=\bfseries,
+    %
+    numbers=left,
+    numbersep=6pt,
+    numberstyle=\tiny,
+    numberfirstline = false,
+    breaklines=true,
+}
+
+% minimizar fragmentado de listados
+\lstnewenvironment{listing}[1][]
+{\lstset{#1}\pagebreak[0]}{\pagebreak[0]}
+
+\lstdefinestyle{CodigoC}
+{
+  basicstyle=\scriptsize,
+  frame=single,
+  language=C,
+  numbers=left
+}
+
+\lstdefinestyle{Consola}
+{
+  basicstyle=\scriptsize\bf\ttfamily,
+  backgroundcolor=\color{gray30},
+  frame=single,
+  numbers=none
+}
+
+%------------------ REDEFINE MACRO ------------------------%
+%Para conseguir que en las páginas en blanco no ponga cabeceras
+\makeatletter
+\def\clearpage{%
+  \ifvmode
+    \ifnum \@dbltopnum =\m@ne
+      \ifdim \pagetotal <\topskip
+        \hbox{}
+      \fi
+    \fi
+  \fi
+  \newpage
+  \thispagestyle{empty}
+  \write\m@ne{}
+  \vbox{}
+  \penalty -\@Mi
+}
+\makeatother
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+%------------------ ACRONIMOS ------------------------%
+
+\makeglossaries
+\input{glosario/acronimos.tex}
+\glsaddall
+
+%------------------ DOCUMENT ------------------------%
+\begin{document}
+
+\input{portada/portada.tex}
+\input{prefacios/prefacio.tex}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\input{capitulos/introduccion.tex}
+\input{capitulos/estado-arte.tex}
+\input{capitulos/analisis-problema.tex}
+\input{capitulos/diseno.tex}
+\input{capitulos/analisis-seguridad.tex}
+\input{capitulos/presupuesto.tex}
+
+\cleardoublepage
+
+\input{capitulos/anexo.tex}
+
+\cleardoublepage
+
+\bibliographystyle{unsrt}
+\bibliography{bibliografia.bib}
+
+\clearpage
+
+\printglossary[type=\acronymtype, title=Acrónimos, toctitle=Acrónimos]
+
+\end{document}

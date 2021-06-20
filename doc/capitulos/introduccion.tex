@@ -1,0 +1,80 @@
+\cleardoublepage
+
+\chapter{Introducción}
+
+El concepto de ``Seguridad de la Información'' se acuño por primera vez mencionado por el NIST en 1997 \cite{neumann1977post}
+aunque la seguridad en el campo de la tecnología siempre ha estado en boca de todos y ha sido un apsecto a tener en cuenta. 
+
+La seguridad en el campo de la tecnología para un campo que se empezó a tener en cuenta con el ``\textit{boom}'' de la 
+tecnología. No obstante, habría que remontarse unos siglos atras, en concreto cuando Julio César vivía para darse cuenta que en 
+aquella época ya se aplicaban ciertas metodologías para envíar mensajes sin que otros se enterasen. Exactamente, hace más de 
+2000 años pusieron en prática la técnica de comunicación entre entidades de forma segura a través de un canal inseguro, la 
+criptografía. La criptografía ha estado latente en muchos hitos de nuestra historia, como por ejemplo con la aparición Alang 
+Turing y su ingenio para descifrar las comunicaciones entre integrantes del ejército alemán en código morse.
+
+La criptografía, según la \acrfull{rae} es el ``arte de escribir con clave secreta o de un modo enigmático''. Esta herramienta
+ha sido la base de la seguriadad de la información ya que sustenta las bases de todo sistema serguro (CIA): confidencialidad 
+(\textit{confidenciality}), integridad (\textit{integrity}) y disponibilidad (\textit{availability}).
+
+La seguridad es un campo de elevada atracción hacia los investigadores y es por ello que la demanda de sistemas altamente seguros
+es un requisito indispensable. A esto, hay que añadirle la posibilidad de tener a un clic acceso a toda información que queramos.
+Esto supone un mayor esfuerzo a la hora de clasificar que información es más sensible que otra y por tanto que grado de seguridad
+hay que aplicar. 
+
+Dada que toda la información no tiene la misma validez, cualquier sistema que envíe tráfico hacia internet con información sensible
+debe cumplir unos requisitos de seguridad necesarios para que no sea intercedida ni modificada. La empresas invierten cada año
+más en seguridad dado el incremento de ataques informáticos que suceden a diario, tal y como se puede ver 
+en esta página \cite{digital_attack} y la aparición constante de nuevas vulnerabilidades, las cuales se pueden consultar 
+\cite{cve_mitre}.
+
+\section{Motivación}
+\label{sec:motivacion}
+
+La idea de este tarbajo nace de raiz de la tesis doctoral \cite{tesisIliaBlockin} publicada en 2020 por la Universidad de Granada
+titulada ``\textit{Mecanismos de seguridad para Big Data basados en circuitos criptográficos}'' y elaborada por \textit{Ilia 
+Blockin}. Esta tesis sugiere soluciones basada en sistemas electrónicos que permitan mejorar la seguridad en el acceso a sistemas 
+donde deben procesarse un elevado volumen de datos. Los sistemas propuestos ofrecen una solución eficiente y flexible para 
+aumentar la seguridad en el acceso a servicios y sistemas que pueden procesar gran cantidad de información. 
+
+El planteamiento se detalla en unos de las mejoras propuestas de dicha tesis: ``\textit{continuar mejorando los sistemas propuestos 
+agregando compatibilidad con otros métodos de autenticación como el Módulo de autenticación conectable de Linux (PAM) u otros 
+protocolos de autenticación}'' 
+
+Personalmente, me he decantado por la elección de este tema ya que tengo especial interés en el campo de la ciberseguridad y 
+lo importante que es a día de hoy en el desarrollo de cualquier sistema y producto software.
+
+Considero que este trabajo es relevante dado el incremento de popularidad que se está dando en el campo del \textit{Big Data} y 
+la importancia de que los \acrfull{cpd} que se usan estén bien protegidos y solo el personal autorizado tenga acceso a ellos.
+
+\section{Objetivos}
+
+Para elaborar la list de objetivos, es necesario conocer los requisitos del sistema donde se pretende implantar. Este entorno
+viene descrito de forma detallada en \cite{multipauthpaper}. 
+
+El presente trabajo conlleva el cumplimiento de los siguientes objetivos:
+
+\begin{enumerate}
+    \item Crear un \acrfull{pam} para el sistema de autenticación propuesto en \cite{multipauthpaper}
+    \item Implementar el módulo PAM para el servicio \acrfull{ssh}
+    \item Usar el protocolo \acrfull{mqtt}
+    \item Seguir esquema de autenticación \textit{challenge-response} \cite{newman2010salted}
+    \item Cifrar el \textit{challenge} mediante el algoritmo de cifrado unidireccional robusto como por ejemplo SHA512 
+    (\acrlong{sha})
+    \item Usar Criptografía de Curva Elíptica o \acrfull{ecc} tanto para la firma del \textit{challenge} como para la verificación del mismo 
+    usando el algoritmo \acrfull{ecdsa}
+    \item Encriptar las comunicaciones entre los elementos del sistema propuesto usando \acrfull{tls} versión 1.2
+\end{enumerate}
+
+\section{Estructura del trabajo}
+
+El presente trabajo se divide en las siguientes secciones y subsecciones: ....
+
+\section{Convenciones}
+
+El texto de este trabajo mantiene una serie de reglas de cumplimiento de texto:
+ 
+\begin{itemize}
+    \item Los acrónimos se describen la primera vez que aparezcan en su idioma original seguido del acrónimo abreviado entre 
+    paréntesis. Posteriormente, solo se usará el acrónimo abreviado.
+    \item Las palabras en otro idioma se detallan en cursiva.
+\end{itemize}

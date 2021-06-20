@@ -1,0 +1,21 @@
+
+msc {
+    hscale="1.5", wordwraparcs=1;  
+	   
+    client [label="Client", linecolor="#008800", textbgcolor="#CCFFCC", arclinecolor="#008800"],
+    server [label="Server", linecolor="#FF0000", textbgcolor="#FFCCCC", arclinecolor="#FF0000"],
+    pam [label="PAM module", linecolor="black", textbgcolor="#DDDDDD", arclinecolor="black"],
+    broker [label="Broker MQTT", linecolor="#0000FF", textbgcolor="#CCCCFF", arclinecolor="#0000FF"],
+    ca [label="CA", linecolor="#FF00FF", textbgcolor="#FFCCFF", arclinecolor="#FF00FF"];
+	
+    broker => broker [label="Create private key"];
+    broker => broker [label="Create CSR"];
+    ca => ca [label="Create private key"],
+        comments note comments  [label="We use the ultra-cool PEGjs parser", linecolor="black", textbgcolor="#FFFFCC"];
+    ca => ca [label="Create CA cert"];
+    broker => ca [label="Send CSR"];
+    ca => ca [label="Sign broker cert"];
+    ca => broker [label="Send cert"];
+    broker => server [label="Send cert"];
+    broker => client [label="Send cert"];
+}

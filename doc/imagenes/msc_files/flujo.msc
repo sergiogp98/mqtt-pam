@@ -1,0 +1,44 @@
+
+msc {
+  hscale="0.7", wordwraparcs=1;
+
+
+  client    [linecolor="#008800", textbgcolor="#CCFFCC", arclinecolor="#008800"],
+  mqtt_frontend  [label="MQTT frontend", linecolor="#008800", textbgcolor="#CCFFCC", arclinecolor="#008800"],
+  auth_device [linecolor="#FF0000", textbgcolor="#FFCCCC", arclinecolor="#FF0000"],
+  mqtt_backend  [label="MQTT backtend", linecolor="#008800", textbgcolor="#CCFFCC", arclinecolor="#008800"],
+  service_provider [label="Service provider", linecolor="#008800", textbgcolor="#CCFFCC", arclinecolor="#008800"],
+
+  service  [label="Service", linecolor="black", textbgcolor="#DDDDDD", arclinecolor="black"],
+
+  you       [linecolor="#008800", textbgcolor="#CCFFCC", arclinecolor="#008800"],
+  controler [linecolor="#FF0000", textbgcolor="#FFCCCC", arclinecolor="#FF0000"],
+  parser    [label="parser (PEGjs)", linecolor="#0000FF", textbgcolor="#CCCCFF", arclinecolor="#0000FF"],
+  renderer  [linecolor="#FF00FF", textbgcolor="#FFCCFF", arclinecolor="#FF00FF"],
+  rast_exp  [label="raster exporter", linecolor="black", textbgcolor="#DDDDDD", arclinecolor="black"],
+  comments  [label=" ", linecolor="transparent"];
+
+  client    =>   mqtt_frontend [label="Remote Service Request #1"];
+  client    >>   auth_device [label="or USB Service Request #1"];
+mqtt_frontend  =>   auth_device [label="some text"];
+  auth_device  => mqtt_backend [label="some text"];
+  mqtt_backend  => service_provider [label="some text"];
+ service_provider  => mqtt_backend [label="some text"];
+      mqtt_backend  => auth_device [label="Grant Resp.#1"];
+  client  <<>> service [label="Client - Server Communication"];
+
+  controler =>   parser    [label="ok?"],
+   comments note comments  [label="We use the ultra-cool PEGjs parser", linecolor="black", textbgcolor="#FFFFCC"];
+  parser    >>   controler [label="syntax tree"];
+  controler =>   renderer  [label="syntax tree"];
+  renderer  =>   renderer  [label="render"],
+   comments note comments  [label="This is the non-trivial stuff...", linecolor="black", textbgcolor="#FFFFCC"];
+  renderer  >>   controler [label="vector picture"];
+  controler >>   you       [label="vector picture"];
+  ---;
+  you       =>   controler [label="raster graphics?"];
+  controler <=>   rast_exp  [label="vector picture"];
+   rast_exp rbox comments   [label="paint the vector graphic on a canvas with drawImage() and return the dataURL of that canvas", linecolor="black", textbgcolor="#FFFFCC"];
+  rast_exp  >>   controler [label="raster picture"];
+  controler >>   you       [label="raster picture"];
+}

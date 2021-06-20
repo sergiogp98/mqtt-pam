@@ -1,0 +1,26 @@
+msc {
+    hscale="1.5", wordwraparcs=1;  
+	   
+    client [label="Client", linecolor="#008800", textbgcolor="#CCFFCC", arclinecolor="#008800"],
+    server [label="Server", linecolor="#FF0000", textbgcolor="#FFCCCC", arclinecolor="#FF0000"],
+    pam [label="PAM module", linecolor="black", textbgcolor="#DDDDDD", arclinecolor="black"],
+    broker [label="Broker MQTT", linecolor="#0000FF", textbgcolor="#CCCCFF", arclinecolor="#0000FF"],
+    ca [label="CA", linecolor="#FF00FF", textbgcolor="#FFCCFF", arclinecolor="#FF00FF"];
+	
+    client => broker [label="Subscribe (pam/<uuid>/challenge)"];
+    client => pam [label="Send SSH request"];
+    pam => pam [label="Check user UUID"];
+    pam => client [label="Send PAM_IGNORE (relax policy)"];
+    pam => pam [label="Subscribte (<uud>/pam/r, <uuid>/pam/s)"];
+    pam => pam [label="Create challenge"];
+    pam => broker [label="Publish challenge (pam/<uuid>/challenge)"];
+    broker => client [label="Broadcast (pam/<uuid>/challenge)"];
+    client => client [label="Create challege hash"];
+    client => client [label="Sign challenge hash"];
+    client => broker [label="Publish sign (<uud>/pam/r, <uuid>/pam/s)"];
+    broker => pam [label="Broadcast (<uud>/pam/r, <uuid>/pam/s)"];
+    pam => pam [label="Create challenge hash"];
+    pam => pam [label="Read client pub key"];
+    pam => pam [label="Verify sign"];
+    pam => client [label="Send PAM_SUCCESS or PAM_ATUH_ERR"];
+}

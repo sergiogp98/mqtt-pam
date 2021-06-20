@@ -1,0 +1,38 @@
+\cleardoublepage
+
+\chapter{Estado del arte}
+
+Vamos a enfocar los trabajos relacionados con respecto a la seguridad que ofrece la Criptografía de Curva Elíptica en dispositivos
+electrónicos para proporcionar un método de autenticación de doble factor. Los trabajos citados a continuación son comparados
+con el propuesto en \cite{multipauthpaper}. \textit{Braeken} propone en \cite{braeken2018puf} un protocolo de autenticación para 
+dispositivos \acrfull{iot} basado en una función física no clonable o \acrfull{puf}. Ambos sistemas se caracterizan porque usan
+un esquema de acuerdo de claves en el que cualquier nodo está registrado bajo la supervisión de un tercer elemento de 
+confianza o \acrfull{ttp} y el uso de certificados. Además, en ambos sistemas se usa el mecanismo de autenticación basdo en 
+reto-respuesta o \textit{challenge-response}. Este es un protocolo en el que una entidad se autentica enviando un valor dependiente
+de un valor secreto y un valor desafío cambiante \cite{van2014encyclopedia}. Si la respuesta es correcta, se da por légitimo al 
+cliente y se autentica. El sistema prouesto en \cite{multipauthpaper} a diferencia de \cite{braeken2018puf}, usa el protocolo 
+\acrshort{mqtt} para la comunicación entre los dispositivos de tal forma que lo hace más escalable. 
+
+\textit{Gao} \cite{gao2020scitokens} propone un sistema similar que usa un token de autenticación basado en el formato JSON, 
+\acrfull{jwt}, junto al servicio SSH y desarrolla, al igual que lo que se propone en el presente trabajo, un módulo PAM de tipo
+desafio-respuesta. Sin embargo, a diferencia de \cite{gao2020scitokens}, este trabajo no usa un formato concreto para responder
+al desafio. De manera similar a \cite{braeken2018puf}, ninguno implementa el protocolo MQTT para la comunicación  entre los 
+nodos que intervienen. 
+
+Existen otros sistemas como por ejemplo el propuesto por \textit{Fayad} en \cite{fayad2020secure} que ratifica la robustez que 
+tiene ECC sobre otros mecanismos de autenticacion como las contraseñas de un solo uso (\acrshort{otp}) basadas en mensajes 
+\textit{Hash} (\acrshortpl{hmac}) o basadas en tiempo (\acrshort{totp}) para entornos con dispositivos IoT. 
+
+Actualmente, existen múltiples métodos de autenticación bien definidos que cumplen con los parametros requeridos: algo que sabes
+(contraseña), algo que tienes (token) y algo que eres (biometría). Para que sea multi factor, al menos dos parametros tienen que
+ser requeridos. Google creó un módulo PAM \cite{noauthor_googlegoogle-authenticator-libpam_2021} para garantizar un factor de 
+serguridad en la autenticación usando su producto \textit{Google Authenticator}. Por otra parte, existen productos como llaves
+de autenticación que verifican tu identidad usando protocolos de seguridad robustos. Es el caso por ejemplo de Yubikey 
+\cite{noauthor_yubikey_nodate}. A diferencia del sistema propuesto, la verificación por llave de seguridad requiere del dispositivo
+físico. También hay productos software en el mercado que permiten el acceso seguro a sistemas sin la necesidad de tener que 
+proveer de la metodología clásica par usario-contraseña. El inicio de sesión único o \acrfull{sso} \cite{noauthor_single_nodate}
+es un método de autenticación que permite a los usuarios autenticarse de forma segura en múltiples aplicaciones y servicios web 
+usando un único conjunto de credenciales.
+
+
+

@@ -1,0 +1,58 @@
+\addappheadtotoc
+
+\appendix
+
+\chapter{Archivos de configuración}
+
+\begin{lstlisting}[style=Consola, caption={Archivo de configuración PAM}, label={code:pam_conf}]
+    # Place your local configuration in /etc/mosquitto/conf.d/
+    #
+    # A full description of the configuration file is at
+    # /usr/share/doc/mosquitto/examples/mosquitto.conf.example
+    pid_file /run/mosquitto/mosquitto.pid
+
+    log_dest file /var/log/mosquitto/mosquitto.log
+    log_type all
+    log_timestamp true
+
+    include_dir /etc/mosquitto/conf.d
+
+    listener 1883 localhost
+    listener 8883
+
+    cafile /etc/mosquitto/ca_certificates/ca.crt
+    certfile /etc/mosquitto/certs/broker-mqtt.crt
+    keyfile /etc/mosquitto/certs/broker-mqtt.key
+
+    allow_anonymous true
+\end{lstlisting}
+
+\begin{lstlisting}[style=Consola, caption={Archivo de configuración de usuarios en /etc/anubis/uuid.csv}, label={code:user_conf}]
+    username,uuid
+    client-1,68263723-e928-4f71-8339-c609478f0a1a   
+\end{lstlisting}
+
+\clearpage
+
+\begin{lstlisting}[style=Consola, caption={Archivo de configuración anubis en /etc/anubis/anubis.conf}, label={code:anubis_conf}]
+    # ------------------------#
+    # /etc/anubis/anubis.conf
+    # ------------------------#
+    #
+    # NOTE
+    # ----
+    #
+    # Configuration file for MQTT-PAM module used to authenticate via SSH
+    # Use only a space between key and value
+    #
+    # Permitted values:
+    # access_type [relax, strict]
+    # ip_address 150.214.*.*
+    # ------------------------#
+    #
+    # Format:
+    # key value
+
+    access_type relax   
+\end{lstlisting}
+

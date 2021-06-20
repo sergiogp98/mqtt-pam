@@ -1,0 +1,34 @@
+\cleardoublepage
+
+\chapter{Análisis de seguridad}
+
+Una vez detallado el diseño e implementación del sistema de autenticación propuesto, es necesario conocer la caracterísiticas
+de seguridad que implementa. 
+
+\textit{Farooq} propone en \cite{farooq2019elliptic} un sistema similar al propuesto en este trabajo pero centrado en sistemas
+electrónicos de tipo contador inteligentes. En él, se hace un estudio de los distintas vulnerabilidades a ciberataques que 
+el sistema evita que se sean explotados.
+
+\section{\acrfull{mitm}}
+
+El ataque MITM conocido como ``Ataque de Hombre en el Medio'' es muy común en todo sistema que use una red pública como puede
+ser Internet para establecer una comunicación entre dos o más integrantes. 
+Para evitar este tipo de ataque, el sistema propuesto usa el algoritmo ECDSA para firmar el desafío y dado que solo el servidor
+conoce la clave pública del cliente. En caso de una tercera persona, para que esta se pudiera pasar por el cliente
+necesitaría interceptar el desafío y conocer su clave privada para firmarlo. 
+
+\section{Integridad del desafío}
+
+Dado que la respuesta al desafío proviene de la salida de una función hash que ha sido procesada en ambos lados, tanto cliente
+como servidor, sin que llege a ser envíada por algún canal, implica que si alguna tercera persona modifica el desafío o la respuesta
+a este, el sistema lo detectará y no pasará.
+
+\section{Confidencialidad del mensaje}
+
+Como ya se ha mencionado en \ref{sec:tls_phase}, la comunicación con el broker MQTT se hace vía TLS. Esto permite que los 
+mensajes vaya cifrados por una clave. Para usar el broker MQTT y comunicarse con el servidor o viceversa, es necesario presentar
+un certificado. Esto garantizar que solo usuario legítimos se comumiquen con el servidor.
+
+
+
+

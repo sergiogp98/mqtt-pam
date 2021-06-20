@@ -1,0 +1,16 @@
+msc {
+    hscale="1.5", wordwraparcs=1;  
+	   
+    client [label="Client", linecolor="#008800", textbgcolor="#CCFFCC", arclinecolor="#008800"],
+    server [label="Server", linecolor="#FF0000", textbgcolor="#FFCCCC", arclinecolor="#FF0000"],
+    pam [label="PAM module", linecolor="black", textbgcolor="#DDDDDD", arclinecolor="black"],
+    broker [label="Broker MQTT", linecolor="#0000FF", textbgcolor="#CCCCFF", arclinecolor="#0000FF"],
+    ca [label="CA", linecolor="#FF00FF", textbgcolor="#FFCCFF", arclinecolor="#FF00FF"];
+	
+    client => client [label="Create UUID"];
+    client => client [label="Create public/private key"];
+    client => client [label="Create /home/<client_user>/.anubis directory"];
+    client => client [label="Save PEM pub key in .anubis as <uuid>.pem"];
+    client => server [label="Send <uuid>.pem at /home/<client_user>/.anubis using SCP"];
+    server => server [label="Save client UUID at /etc/anubis/uuid.csv"];
+}

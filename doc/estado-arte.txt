@@ -1,0 +1,13 @@
+Paper: mult_auth_hpc_cloud
+
+Comparacion papers con mult_auth_hpc_cloud:
+
+1. A lightweight remote user authentication scheme for IoT
+communication using elliptic curve cryptography
+- solo hay un gateway de acceso en la parte del servidor (iot) -> gateway cliente y servidor
+- no usa protocolo mqtt
+- no hay servidor de autenticacion ni configuracion (servidores seguros no descentralizados)
+
+2. MQTT based Home Automation System Using
+ESP8266
+
