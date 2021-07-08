@@ -9,7 +9,7 @@ CFLAGS=-I$(INCLUDE_DIR) -g
 PAM_FLAGS=-fPIC -fno-stack-protector
 LD_FLAGS=-x --shared
 
-_FILES = crypt ecdsa mqtt utils uuid file
+_FILES = conf crypt ecdsa mqtt ssl utils uuid
 
 _LIBS = lmosquitto lssl lcrypto luuid
 LIBS = $(patsubst %, -%, $(_LIBS))
