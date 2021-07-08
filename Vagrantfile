@@ -1,4 +1,4 @@
-n_servers = 2
+n_servers = 1
 n_clients = 1
 
 server_net = "172.16.1.10"
