@@ -1,80 +1,94 @@
-\cleardoublepage
-
 \chapter{Introducción}
 
-El concepto de ``Seguridad de la Información'' se acuño por primera vez mencionado por el NIST en 1997 \cite{neumann1977post}
-aunque la seguridad en el campo de la tecnología siempre ha estado en boca de todos y ha sido un apsecto a tener en cuenta. 
+El concepto de ``Seguridad de la Información'' se acuñó por primera vez en un artículo del Instituo Nacional de Estándares y 
+Teconología (\acf[first-style=short]{nist}) en 1997 \cite{neumann1977post} aunque la seguridad en el campo de la tecnología siempre ha estado en 
+boca de todos y ha sido un apsecto a tener en cuenta. 
 
-La seguridad en el campo de la tecnología para un campo que se empezó a tener en cuenta con el ``\textit{boom}'' de la 
-tecnología. No obstante, habría que remontarse unos siglos atras, en concreto cuando Julio César vivía para darse cuenta que en 
-aquella época ya se aplicaban ciertas metodologías para envíar mensajes sin que otros se enterasen. Exactamente, hace más de 
-2000 años pusieron en prática la técnica de comunicación entre entidades de forma segura a través de un canal inseguro, la 
-criptografía. La criptografía ha estado latente en muchos hitos de nuestra historia, como por ejemplo con la aparición Alang 
-Turing y su ingenio para descifrar las comunicaciones entre integrantes del ejército alemán en código morse.
+La ciberseguridad se empezó a tener en cuenta con el ``\textit{boom}'' de la era digital. No obstante, habría que remontarse unos 
+siglos atras para saber cuando se empezó a aplicar métodos seguros a la información. Concretamente cuando Julio César vivía, se 
+empezó a usar algoritmos de cifrado simples que se aplicaban sobre mensajes que tenían que ser enviados y así si alguien lo 
+interceptada, no podía saber su contenido. A esta práctica se conoce como criptografía. La criptografía ha estado latente en muchos 
+hitos de nuestra historia, como por ejemplo con la aparición Alang Turing y su ingenio para descifrar las comunicaciones entre 
+integrantes del ejército alemán en código morse.
 
-La criptografía, según la \acrfull{rae} es el ``arte de escribir con clave secreta o de un modo enigmático''. Esta herramienta
-ha sido la base de la seguriadad de la información ya que sustenta las bases de todo sistema serguro (CIA): confidencialidad 
+La criptografía, según la \acf[first-style=short]{rae} es el ``arte de escribir con clave secreta o de un modo enigmático''. Esta herramienta
+ha sido la base de la seguriadad de la información ya que sustenta las tres propiedades de todo sistema seguro (CIA): confidencialidad 
 (\textit{confidenciality}), integridad (\textit{integrity}) y disponibilidad (\textit{availability}).
 
-La seguridad es un campo de elevada atracción hacia los investigadores y es por ello que la demanda de sistemas altamente seguros
-es un requisito indispensable. A esto, hay que añadirle la posibilidad de tener a un clic acceso a toda información que queramos.
-Esto supone un mayor esfuerzo a la hora de clasificar que información es más sensible que otra y por tanto que grado de seguridad
-hay que aplicar. 
-
-Dada que toda la información no tiene la misma validez, cualquier sistema que envíe tráfico hacia internet con información sensible
-debe cumplir unos requisitos de seguridad necesarios para que no sea intercedida ni modificada. La empresas invierten cada año
-más en seguridad dado el incremento de ataques informáticos que suceden a diario, tal y como se puede ver 
-en esta página \cite{digital_attack} y la aparición constante de nuevas vulnerabilidades, las cuales se pueden consultar 
-\cite{cve_mitre}.
+Tal y como se puede apreciar en \cite{digital_attack}, el número de ciberataques que suceden a diaría es muy elevado. Es por ello
+que se cualquier empresa que de soporte a clientes almacenando información sensible use herramientas de seguridad que estén al 
+día de los distintas vulnerabilidades que se descubren \cite{cve_mitre}.
 
 \section{Motivación}
 \label{sec:motivacion}
 
-La idea de este tarbajo nace de raiz de la tesis doctoral \cite{tesisIliaBlockin} publicada en 2020 por la Universidad de Granada
+La idea de este tarbajo nace de a raiz de la tesis doctoral \cite{tesisIliaBlockin} publicada en 2020 por la Universidad de Granada
 titulada ``\textit{Mecanismos de seguridad para Big Data basados en circuitos criptográficos}'' y elaborada por \textit{Ilia 
-Blockin}. Esta tesis sugiere soluciones basada en sistemas electrónicos que permitan mejorar la seguridad en el acceso a sistemas 
-donde deben procesarse un elevado volumen de datos. Los sistemas propuestos ofrecen una solución eficiente y flexible para 
+Blockin}. Esta tesis sugiere soluciones basada en sistemas electrónicos que ofrecen una solución eficiente y flexible para 
 aumentar la seguridad en el acceso a servicios y sistemas que pueden procesar gran cantidad de información. 
 
 El planteamiento se detalla en unos de las mejoras propuestas de dicha tesis: ``\textit{continuar mejorando los sistemas propuestos 
 agregando compatibilidad con otros métodos de autenticación como el Módulo de autenticación conectable de Linux (PAM) u otros 
 protocolos de autenticación}'' 
 
-Personalmente, me he decantado por la elección de este tema ya que tengo especial interés en el campo de la ciberseguridad y 
-lo importante que es a día de hoy en el desarrollo de cualquier sistema y producto software.
-
-Considero que este trabajo es relevante dado el incremento de popularidad que se está dando en el campo del \textit{Big Data} y 
-la importancia de que los \acrfull{cpd} que se usan estén bien protegidos y solo el personal autorizado tenga acceso a ellos.
+Personalmente, me he decantado por la elección de este tema ya que tengo especial interés en el campo de la ciberseguridad y por 
+el reto de conocer en profundidad las bases de la criptografía.
 
 \section{Objetivos}
 
-Para elaborar la list de objetivos, es necesario conocer los requisitos del sistema donde se pretende implantar. Este entorno
+Para elaborar la lista de objetivos, es necesario conocer los requisitos del sistema donde se pretende implantar. Este entorno
 viene descrito de forma detallada en \cite{multipauthpaper}. 
+
+\subsection{Diseño del sistema propuesto}
+
+Se propone un sistema con un conjunto de elementos físicos y virtualizados:
+
+\begin{itemize}
+    \item \textit{Usurio}: quien accede al sistema
+    \item \textit{Servicios}: ofrecido por programas a través de conexión TCP 
+    \item \textit{Servidores}: ordenadores donde los servicios son instalados
+    \item \textit{Clientes}: ordenadores desde donde los servicios son accedidos
+    \item \textit{eToken}: dispositivos que autentica la petición del usuario
+\end{itemize}
+
+Se define una lista de control (\acf[first-style=short]{acl}) con reglas para garantizar una autorización deseada. Cada elemento viene 
+identificado por un Identificador Único Universal (\acf[first-style=short]{uuid}) de 128 bits y un par de claves pública y privada que permite 
+al sistema a autenticar las peticiones.
+El sistema es híbrido, es decir que usan la clave pública combinado con un modelo centralizado para autorizar el acceso. Hay 
+dos elementos más:
+
+\begin{itemize}
+    \item \textit{Servidor de configuración}: permite modificar la configuración de cada elemento remotamente
+    \item \textit{Servidor de autenticación}: autoriza la petición de acceso a servicios basado en las ACL
+    \item \textit{Gateway}: redirige la conexión de red entre clinte y servidores
+    \item \textit{Broker MQTT}: servidor de intercambio de mensajes 
+\end{itemize}
+
+\subsection{Listado de objetivos}
 
 El presente trabajo conlleva el cumplimiento de los siguientes objetivos:
 
 \begin{enumerate}
-    \item Crear un \acrfull{pam} para el sistema de autenticación propuesto en \cite{multipauthpaper}
-    \item Implementar el módulo PAM para el servicio \acrfull{ssh}
-    \item Usar el protocolo \acrfull{mqtt}
+    \item Crear un módulo \acf[first-style=short]{pam} para el sistema de autenticación propuesto en \cite{multipauthpaper}
+    \item Implementar el módulo PAM para el servicio \acf[first-style=short]{ssh}
+    \item Usar el protocolo \acf[first-style=short]{mqtt}
     \item Seguir esquema de autenticación \textit{challenge-response} \cite{newman2010salted}
-    \item Cifrar el \textit{challenge} mediante el algoritmo de cifrado unidireccional robusto como por ejemplo SHA512 
-    (\acrlong{sha})
-    \item Usar Criptografía de Curva Elíptica o \acrfull{ecc} tanto para la firma del \textit{challenge} como para la verificación del mismo 
-    usando el algoritmo \acrfull{ecdsa}
-    \item Encriptar las comunicaciones entre los elementos del sistema propuesto usando \acrfull{tls} versión 1.2
+    \item Cifrar el \textit{challenge} mediante un algoritmo de cifrado unidireccional robusto como por ejemplo SHA512 
+    (\acf[first-style=short]{sha})
+    \item Usar Criptografía de Curva Elíptica o \acf[first-style=short]{ecc} tanto para la firma del \textit{challenge} como para la verificación 
+    del mismo usando el Algoritmo de Firma Digital de Curva Elíptica (\acf[first-style=short]{ecdsa})
+    \item Encriptar las comunicaciones entre los elementos del sistema propuesto usando \acf[first-style=short]{tls} versión 1.2
 \end{enumerate}
 
 \section{Estructura del trabajo}
 
-El presente trabajo se divide en las siguientes secciones y subsecciones: ....
-
-\section{Convenciones}
-
-El texto de este trabajo mantiene una serie de reglas de cumplimiento de texto:
- 
-\begin{itemize}
-    \item Los acrónimos se describen la primera vez que aparezcan en su idioma original seguido del acrónimo abreviado entre 
-    paréntesis. Posteriormente, solo se usará el acrónimo abreviado.
-    \item Las palabras en otro idioma se detallan en cursiva.
-\end{itemize}
+El presente trabajo se divide en las siguientes capítulos: en \ref{chap:estado-arte} se detalla la ``situación actual de la 
+tecnología''. Se habla de otros proyectos que existen actualmente y que realizan funcionalidades iguales o parecidas a las 
+que se propone en este proyecto. Se valora los puntos fuertes y ámbitos en los que se puede aplicar. En \ref{chap:analisis-problema},
+se habla de la seguridad en el apartado de la autenticación en sistemas, la seguridad aplicada a entornos IoT, el protocolo
+MQTT usado, la criptografía de curva elíptica y el algoritmo ECDSA y por último PAM y su arquitectura. Al final se hace alusión
+de las herramientas usadas para el desarrollo de este trabajo. En \ref{chap:diseño} se hace un análisis exhaustivo del 
+funcionamiento del programa indicando sus distintas fases. En \ref{chap:analisis-seguridad} lista algunas caracterísiticas
+de seguridad y cómo las lleva a cabo. En \ref{chap:presupuesto} se hace un resumen de lo que ha costado económicamente el 
+proyecto y su desarrollo temporal con un diagrama de Gantt. Por último, en \ref{chap:conclusion} se hace un resumen de objetivo
+de este proyecto, los resultado obtenidos, problemas afrontados y futuras mejoras.

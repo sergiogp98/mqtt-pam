@@ -1,7 +1,5 @@
 %------------------ KEY WORDS - ABSTRACT (ESP) ------------------------%
 
-\chapter*{}
-
 \thispagestyle{empty}
 
 \cleardoublepage
@@ -20,28 +18,40 @@
 
 \noindent{\textbf{Resumen}}\\
 
-Cada vez está más en boca el término ``seguridad''. No es de extrañar que desde que comenzó la era digital, los retos tecnológicos son cada vez más complejos. No obstante, dado el grado 
-de conocimiento y herramienta de las que disponemos, estos son bastante factibles y llamativos para cualquiera. Es por eso que el uso de elementos tecnológicos en nuestro día a día se
+Cada vez está más en boca el término ``seguridad''. No es de extrañar que desde que comenzó la era digital, los retos tecnológicos 
+son cada vez más complejos. No obstante, dado el grado de conocimiento y herramienta de las que disponemos, estos son bastante 
+factibles y llamativos para cualquiera. Es por eso que el uso de elementos tecnológicos en nuestro día a día se
 concibe como algo innato en nuestras vidas. 
 
-La tecnología nos trae numeros beneficios que vale simplemente con echar la vista atrás y ver como la sociedad ha llegado a conseguir retos tan importantes gracias a la ayuda de esta. 
-Sin embargo, la tecnología tiene su lado adverso y es la seguridad. Por muy llamativa y útil que pueda ser una tecnología, si no se lleva a cabo unos cumplimientos de seguridad bien definidos
-y estrictos durante su desarrollo, el usuario final puede no llegar a usarlo y por tanto quedar en vano el trabajo realizado.
+La tecnología nos trae numerosos beneficios. Nada más que con echar la vista atrás y ver como la sociedad ha llegado a conseguir 
+retos tan importantes gracias a la ayuda de esta es suficiente. Sin embargo, la tecnología tiene su lado adverso, la seguridad. 
+Por muy llamativa y útil que pueda ser una tecnología, si no se lleva a cabo unos cumplimientos de seguridad bien definidos
+y estrictos durante su desarrollo, el usuario final puede no llegar a usarlo y por tanto quedar en vano el trabajo realizado o 
+peor aun, que sea usado muchos usuarios y tengas graves vulnerabilidades que afecten a la integridad de sus datos.
 
-Gracias a la era del ``Big Data'' en la que vivmos, tenemos acceso a una ingesta cantidad de information al instante la cual se estudia y se llevan a cabo análisis complejos sobre la misma. 
-Esta característica asociada a la seguridad hace que el conocimiento acerca de las posibles vulnerabilidades sea un campo que nunca parace acabar. Es por eso que todo sistema no es 100\%
-seguro.
+Con la llegada del \textit{Big Data}, cada vez más tenemos acceso a cualquier información en cualquier momento. Las compañías 
+hacen un arduo esfuerzo en proteger nuestros datos y que estos no caigan en las manos equivocadas. Pero como bien es de saber, 
+ningún sistema, por muy complejo y sofisticado que pueda llegar a ser, es 100\% seguro. Cada día salen nuevas vulnerabilidades
+y complejos ataques para corromper estos sistemas y es por ello que la inversión de las compañías en ciberseguridad incrementa
+cada año. Para que esta inversión sea eficiente, es necesario apostar por la investigación en este campo y así garantizar un 
+futuro más ``seguro''.
 
-El objetivo de este trabajo es el estudio de la seguridad en entornos definidos (HPC y Cloud) donde el volumen de datos es elevado y por consiguiente el almacenamiento y manejo del mismo
-se tiene que hacer desarrollar de forma segura y garantizando las bases de todo sistema seguro: confidencialidad, integridad y disponibilidad. 
-Se propone una solución basada en un sistema electrónico que garantiza una autenticación a estos entornos de forma más segura. 
+El objetivo de este trabajo es el estudio de la seguridad en entornos definidos (\acf[first-style=short]{hpc} y Cloud) donde el volumen de datos 
+que se almacena es elevado y por consiguiente puede ser información más sensible, garantizando la confidencialidad, integridad y 
+disponibilidad del sistema.  
 
-Este estudio se centra principalmente en la incorporación de un modulo de seguridad a este sistema de forma que pueda ser usado por cualquier otro dispositivo en entornos variados 
-garantizando una solución portable y eficiente.
+Se propone una solución \cite{multipauthpaper} de un modelo de aunteticaión multifactor, \acf[first-style=short]{mfa}, basada en un sistema 
+electrónico (MCU basado en un ESP-32) garantizando un alto rendimiento y eficiencia debido al consumo de estos componentes electrónicos,
+una arquitectura distribuida ofreciendo una mayor escalabilidad y con un alta granularidad en cuanto a seguridad se refiere. 
+
+Este trabajo se centra principalmente en la incorporación de un modulo de seguridad a este sistema de autenticación propuesto de 
+forma que pueda ser usado por cualquier otro dispositivo en entornos variados garantizando una solución portable y eficiente.
 
 %------------------ KEY WORDS - ABSTRACT (EN) ------------------------%
 
 \thispagestyle{empty}
+
+\cleardoublepage
 
 \begin{center}
     {\large\bfseries \myTitleEN}\\
@@ -58,23 +68,39 @@ garantizando una solución portable y eficiente.
 \noindent{\textbf{Abstract}}\\
 
 
-The term ``security'' is becoming more and more popular. It is not surprising that since the digital era began, technological challenges have become increasingly complex. However, given the degree of knowledge and tools at our disposal, they are quite feasible and appealing to anyone. That is why the use of technological elements in our day-to-day life is conceived as something innate in our lives. 
+The term ``security'' is becoming more and more popular. It is not surprising that since the digital era began, technological 
+challenges have become increasingly complex. However, given the degree of knowledge and tools at our disposal, they are quite 
+feasible and appealing to anyone. That is why the use of technological elements in our daily lives is conceived as something 
+innate in our lives. 
 
-Technology brings us so many benefits that it is worth just looking back and seeing how society has achieved such important challenges thanks to its help. 
-However, technology has its downside and that is security. No matter how flashy and useful a technology may be, if strict and well-defined security standards are not followed during its development, the end user may not be able to use it and therefore the work done may be in vain.
+Technology brings us numerous benefits. Just looking back and seeing how society has achieved such important challenges thanks to 
+its help is enough. However, technology has its downside: security. No matter how attractive and useful a technology may be, if it 
+does not comply with well-defined and strict security standards during its development, the end user may not use it and therefore 
+the work done may be in vain, or worse still, it may be used by many users and have serious vulnerabilities that affect the 
+integrity of their data.
 
-Thanks to the ``Big Data'' era in which we live, we have access to an instantaneous intake of information which is studied and complex analyses are carried out on it. 
-This characteristic associated with security means that knowledge about possible vulnerabilities is a field that never seems to end. That is why every system is not 100\% secure.
+With the advent of \textit{Big Data}, we increasingly have access to any information at any time. Companies make an arduous effort 
+to protect our data from falling into the wrong hands. But as we all know, no system, no matter how complex and sophisticated it 
+may be, is 100\% secure. Every day new vulnerabilities and complex attacks to corrupt these systems emerge and that is why 
+companies' investment in cybersecurity increases every year. In order for this investment to be efficient, it is necessary to 
+invest in research in this field and thus guarantee a more ``secure'' future.
 
-The objective of this work is the study of security in defined environments (HPC and Cloud) where the volume of data is high and therefore the storage and management of the same must be developed in a secure way and guaranteeing the bases of any secure system: confidentiality, integrity and availability.  We propose a solution based on an electronic system that guarantees a more secure authentication to these environments. 
+The objective of this work is the study of security in defined environments (\acf[first-style=short]{hpc} and Cloud) where the volume of data 
+stored is high and therefore may be more sensitive information, ensuring the confidentiality, integrity and availability of the 
+system.  
 
-This study is mainly focused on the incorporation of a security module to this system so that it can be used by any other device in different environments, guaranteeing a portable and efficient solution. 
+A solution \cite{multipauthpaper} of a multifactor authentication \acf[first-style=short]{mfa} model is provided, based on an electronic system 
+(MCU based on ESP-32) guaranteeing high performance and efficiency due to the consumption of these electronic components, a distributed 
+architecture offering greater scalability and with a high granularity in terms of security. 
+
+This work is mainly focused on the incorporation of a security module to this proposed authentication system so that it can be 
+used by any other device in varied environments guaranteeing a portable and efficient solution.
 
 %------------------ AUTORIZACION ------------------------% 
 
-\chapter*{}
-
 \thispagestyle{empty}
+
+\cleardoublepage
 
 \noindent\rule[-1ex]{\textwidth}{2pt}\\[4.5ex]
 
@@ -123,15 +149,19 @@ Y para que conste, expiden y firman el presente informe en Granada a \myTime.
 
 %------------------ AGRADECIMIENTOS ------------------------% 
 
-\chapter*{Agradecimientos}
-
 \thispagestyle{empty}
+
+\cleardoublepage
+
+\chapter*{Agradecimientos}
 
 \vspace{1cm}
 
-A mi director de Trabajo Fin de Grado, \myProf  por su coordinación y conocimiento acerca de la materia que me ha ayudado a desarrollar este trabajo a pesar de los inconvenientes.
+A mi director de Trabajo Fin de Grado, \myProf  por su coordinación y conocimiento acerca de la materia que me ha ayudado a 
+desarrollar este trabajo a pesar de los inconvenientes.
 
-Tambien me gustaría agradecer este trabajo al apoyo de mi madre y hermanos que han confiado en mi en todo momento y me han dado soporte en los momentos mas dificiles de
-mi recorrido académico. Pero sobre todo a mi padre, que ha sido mi apoyo incondicional en estos años de carrera y del que seguro que estaría orgulloso de ver lo lejos que he llegado.
+Tambien me gustaría agradecer este trabajo al apoyo de mi madre y hermanos que han confiado en mi en todo momento y me han dado 
+soporte en los momentos mas dificiles de mi recorrido académico. Pero sobre todo a mi padre, que ha sido mi apoyo incondicional en 
+estos años de carrera y del que seguro que estaría orgulloso de ver lo lejos que he llegado.
 
 ¡Gracias!

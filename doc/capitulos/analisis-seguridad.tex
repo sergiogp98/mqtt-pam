@@ -1,27 +1,24 @@
-\cleardoublepage
-
 \chapter{Análisis de seguridad}
+\label{chap:analisis-seguridad}
 
 Una vez detallado el diseño e implementación del sistema de autenticación propuesto, es necesario conocer la caracterísiticas
 de seguridad que implementa. 
 
 \textit{Farooq} propone en \cite{farooq2019elliptic} un sistema similar al propuesto en este trabajo pero centrado en sistemas
 electrónicos de tipo contador inteligentes. En él, se hace un estudio de los distintas vulnerabilidades a ciberataques que 
-el sistema evita que se sean explotados.
+el sistema evita que se sean explotados y los cuales se van a analizar contra este sistema propuesto.
 
-\section{\acrfull{mitm}}
+\section{\acf[first-style=short]{mitm}}
 
 El ataque MITM conocido como ``Ataque de Hombre en el Medio'' es muy común en todo sistema que use una red pública como puede
 ser Internet para establecer una comunicación entre dos o más integrantes. 
-Para evitar este tipo de ataque, el sistema propuesto usa el algoritmo ECDSA para firmar el desafío y dado que solo el servidor
-conoce la clave pública del cliente. En caso de una tercera persona, para que esta se pudiera pasar por el cliente
-necesitaría interceptar el desafío y conocer su clave privada para firmarlo. 
+Para evitar este tipo de ataque, el sistema propuesto usa el algoritmo ECDSA para firmar el desafío usando la clave privada del 
+cliente. Para que una tercera persona se haga pasar por este cliente, esta primera tendría que conocer dicha clave.
 
 \section{Integridad del desafío}
 
-Dado que la respuesta al desafío proviene de la salida de una función hash que ha sido procesada en ambos lados, tanto cliente
-como servidor, sin que llege a ser envíada por algún canal, implica que si alguna tercera persona modifica el desafío o la respuesta
-a este, el sistema lo detectará y no pasará.
+El hash del desafío se calcula en ambas parte, cliente y servidor, sin llegar a enviarse. Por ello, si alguien qu estuviera 
+escuchando y modificase el desafío, el cliente fimaría un hash distinto al servidor y por tanto no se verificaría. 
 
 \section{Confidencialidad del mensaje}
 

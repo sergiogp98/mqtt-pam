@@ -1,6 +1,5 @@
-\cleardoublepage
-
 \chapter{Análsis del problema}
+\label{chap:analisis-problema}
 
 \section{Seguridad en la autenticación}
 
@@ -14,7 +13,7 @@ humanos en su diseño.
 
 Actualmente existen múltiples métodos para autenticar a un usuario contra un sistema, siendo el más común es el par de claves 
 usuario y contraseña, pero no es el único. El uso de certificados está cada vez más extendido en Infraestructuras de Clave 
-Pública (\acrshortpl{pki}). 
+Pública (\acf[first-style=short]{pki}). 
 
 Para garantizar que un sistema es necesario que se garantizen tres aspectos \cite{bases_seguridad}:
 
@@ -25,7 +24,7 @@ Para garantizar que un sistema es necesario que se garantizen tres aspectos \cit
 \end{itemize}
 
 Usar un método de autenticación no implica que el sistema sea completamente seguro. De echo, la autenticación se convierte en 
-un proceso más robusto y fiable aplicando múltiples métodos, también llamado \acrfull{mfa}. Este mecanismo propone tres tipos 
+un proceso más robusto y fiable aplicando múltiples métodos, también llamado \acf[first-style=short]{mfa}. Este mecanismo propone tres tipos 
 de factores que permiten a un usuario vincularlo con las credenciales establecidas \cite{ometov2018multi}:
 
 \begin{enumerate}
@@ -46,37 +45,64 @@ ocupa del estudio de cómo debe tratarse la información de seguridad en la inte
 de seguridad y los sistemas de autenticación deben ser fáciles de usar \cite{braz2006security}.
 
 Este sistema \cite{multipauthpaper} propone un mecanismo de autenticación usable, de múltiples factores y escalable gracias 
-principalmente al uso de dispositivos electrónicos con circuitos integrados como es Arduino.
+principalmente al uso de dispositivos electrónicos con circuitos integrados como es Arduino así como del protocolo MQTT.
 
 \subsection{Seguridad en IoT}
 
-El Internet de las cosas o \acrfull{iot} es un término relativamente nuevo. Se puede definir como una red abierta y completa de 
+El Internet de las cosas (\acf[first-style=short]{iot}) es un término relativamente nuevo. Se puede definir como una red abierta y completa de 
 objetos inteligentes que tienen la capacidad de auto-organizarse, compartir información, datos y recursos, reaccionar y actuar 
 ante situaciones y cambios en el entorno \cite{madakam2015internet}. 
 
-El IoT ha facilitado la interconectividad entre dispositios ayudando a conectar sensores, vehículos, hospitles, industrias y 
-consumidores a través de Internet. Las arquitecturas en IoT son cada vez más complejas, descentralizadas y fluidas dado el incremento de dispositivos que se 
-comunuican entre sí y es por ello que la seguridad juega un papel fundamental en él. Los dispositivos IoT deben ser seguros y no 
-pueden ser manipulados por terceras personas no autorizadas. 
+El IoT ha facilitado la interconectividad entre dispositivos ayudando a conectar sensores, vehículos, hospitles, industrias y 
+consumidores a través de Internet. Las arquitecturas en IoT son cada vez más complejas, descentralizadas y fluidas dado el 
+incremento de dispositivos que se comunuican entre sí y es por ello que la seguridad juega un papel fundamental en él. 
+Los dispositivos IoT deben ser seguros y no pueden ser manipulados por terceras personas no autorizadas. 
 
-\subsection{\acrfull{mqtt}}
+\subsection{\acf[first-style=short]{mqtt}}
 
-\acrfull{mqtt} es un protocolo de comunicación que funciona a nivel de la capa de aplicación. Es usado principalmente en entornos
+Es un protocolo de comunicación que funciona a nivel de la capa de aplicación. Es usado principalmente en entornos
 con dispositivos IoT por ser un protocolo con un consumo de bando de ancha y batería mínimo \cite{sugumar2020mqtt}.
 
-A diferencia del protoclo de comunicación \acrfull{http} que funciona mediante petición-respuesta, MQTT está basado es 
+A diferencia del protoclo de comunicación \acf[first-style=short]{http} que funciona mediante petición-respuesta, MQTT está basado es 
 publicación-respuesta. Este modelo de protocolo requiere de un broker mensajero. Existen múltiples tipos de brokers como 
 Mosquitto \cite{eclipse_2018}, HiveMqtt \cite{hivemq}, Mosca \cite{moscajsmosca_2021}, cloudMQTT \cite{cloudmqtt}, MQTT.Js 
 \cite{mqttjs}, etc. Para el trabajo propuesto, se usa Mosquitto.
 
+\subsubsection{Funcionamiento del protocolo MQTT}
+
+El cliente MQTT se conecta el broker MQTT subscribiéndose a un tópico. Un tópico es un identificador al cual los nodos se subscriben
+y por el que publican mensajes. Si algun mensaje es publicado por un tópico, este llega a todos los nodos que estés suscritos al 
+mismo. Se representa con una cadena de caracteres separada por el símbolo $/$ indicando el elemento, dentro de una jerarquía, al 
+que se subscribe. 
+Un ejemplo de un tópico sería $cocina/sensor1/temperatura$ de tal forma que el cliente obtiene la información de temperatura que 
+le llega el sensor1 en la cocina. MQTT se basa en el protoclo TCP/IP para la transmisión de datos. 
+El cliente siempre interactua con el broker. No obstante, puede haber múltiples brokers que intercambien datos segun los 
+tópicos de subscripción.
+
+\subsubsection{Seguridad en MQTT}
+Para garantizar un nivel de seguridad elevado en cuanto a la transmisión de datos se refiere, este protocolo usa por encima
+TLS para garantizarlo. Este protolo crea un canal seguro entre el cliente y el broker, parecido a como funciona en los 
+navegadores web. Para ello es necesario un certificado del servidor de confianza. 
+
+\subsubsection{Ventajas de MQTT sobre HTTP}
+
+En HTTPS, no se mantiene una conexión continua. El cliente tiene que mandar petición de sondeo (\textit{poll request}) donde 
+este solicita información al servidor acerca de la nueva petición de conexión TCP así como la negociación del tipo de 
+encriptación SSL/TLS. 
+
+A diferencia de HTTPS, MQTT establece una única conexión inicial. MQTT mantiene un flujo de mensajes fijo (\textit{keep alive})
+entre aplicaciones sobre la conexión TCP de tal forma que las aplicaciones pueden detectar cuando una conexión está rota.
+
 \subsection{Criptografía de Curva Elíptica}
 
-La Criptografía de Curva Elíptica (\acrshortpl{ecc}) pertenece a las tres familias de algrotimos de clave pública de gran relevancia 
+La Criptografía de Curva Elíptica (\acf[first-style=short]{ecc}) pertenece a las tres familias de algoritmos de clave pública de gran relevancia 
 (factorización de enteros, logaritmos discretos y curva elíptica). Este último nació entorno a mitad de los años 80.
-ECC provee del mismo nivel de seguridad que \acrfull{rsa} o sistemas logarítmicos discretos con operaciones considerablemente 
-pequeñas. ECC está basado en el problema de logaritmo discreto (\acrshortpl{dlp}) \cite{mccurley1990discrete}. ECC tiene beneficios en cuanto
-a su capacidad computacional (menos computaciones) y consumo de ancho de banda (claves y firmas más pequeñas) sobre RSA y DL. No
-obstante, las operaciones RSA que implican una clave pública más pequeña son más rápidas que ECC.
+ECC provee del mismo nivel de seguridad que \acf[first-style=short]{rsa} o sistemas logarítmicos discretos con operaciones considerablemente 
+pequeñas. ECC está basado en el problema de logaritmo discreto (\acf[first-style=short]{dlp}) \cite{mccurley1990discrete}. ECC tiene beneficios 
+en cuanto a su capacidad computacional ya que requiere de menos operaciones computacionales y tiene un consumo de ancho de banda 
+muy inferior debido a la pequeña longitud de las claves y firmas con respecto otros como RSA. Esto lo hace ídoneo en arquitecturas
+que intervienen dispositivos electrónicos de bajo consumo (Arduinos, Raspberry Pi, etc). No obstante, las operaciones RSA que 
+implican una clave pública más pequeña son más rápidas que ECC.
 
 El objetivo de esta sección es explicar las bases de este algoritmo sin entrar en detalles matemáticos. Para mayor documentación
 se sugiere leer el libro \cite{paar2009understanding} del cual se ha sacado la información.
@@ -91,7 +117,6 @@ es un tipo especial de ecuación polinómica. En criptografía se trabaja sobre 
 campos primo, donde todas las operaciones aritméticas se desarrollan sobre módulo \textit{p}, siendo este un número primo.
 
 La definición de curva elíptica es la siguiente:
-
 
 \begin{definition}[Curva Elíptica]
     La curva elíptica sobre $\mathbb{Z}_{p}$, $\textit{p} > 3$, es el conjunto de pares de punto $\textit{(x,y)} \in \mathbb{Z}_{p}$ 
@@ -112,6 +137,7 @@ La definición de curva elíptica es la siguiente:
 Ejemplo de una curva elíptica:
 
 \begin{figure}[H]
+    \centering
     \begin{tikzpicture}
         \begin{axis}[
                 xmin=-2,
@@ -145,20 +171,20 @@ Aspecto fundamentales a tener en cuenta de la curva:
 \begin{itemize}
     \item Es una curva no-singular, es decir que la curva no se intersecta a si mismo siempre y cuando el discriminante de la curva
     $-16(4a^3 + 27b^2) \not = 0$
-    \item La curva es simétrica con respecto al eje de abscisas ya que si despejamos la $y$ de la ecuación, ambos valores
-    $\pm\sqrt{x^3 + ax + b} \; mod \; p$ 
+    \item La curva es simétrica con respecto al eje de abscisas ya que si despejamos la $y$ de la ecuación obtenemos dos soluciones
+    $\pm\sqrt{x^3 + ax + b} \; merod \; p$ 
     \item Hay solo una intersección en el eje de abscisas. Se debe a que si solucionamos la ecuación para $y = 0$, exite una 
     solución real (intersección con el eje de abscisas) y dos soluciones complejas (no mostradas en la gráfica). Existen curvas 
     elípticas con tres soluciones reales.
 \end{itemize}
 
-\subsubsection{\acrfull{ecdsa}}
+\subsubsection{\acf[first-style=short]{ecdsa}}
 \label{subsec:ecdsa}
 
 La curva elíptica tiene ventajas sobre RSA y otros esquemas DL. Los ECC con una clave con un tamaño que oscila entre los 160 y 256
 bits proveen de una seguridad similar a otros algoritmos criptográficos de entre 1024 y 3072 bits. Esta propiedad resulta en un 
 tiempo de procesamiento menor así como firmas más pequeñas. Por esa razón, ECDSA fue estandarizado en Estados Unidos por la 
-\acrshort{ansi} en 1998. 
+\acf[first-style=short]{ansi} en 1998. 
 El estándar ECDSA es definido para curvas elípticas sobre campos de número primo $\mathbb{Z}_{p}$ y campos de Galois $GF(2^m)$.
 Este algorimo se compone de las siguientes fases:
 
@@ -192,19 +218,19 @@ están definidos en la tabla \ref{tab:bit-len-sec-level}
     \label{tab:bit-len-sec-level}
 \end{table}
 
-\subsection{\acrfull{pam}}
+\subsection{\acf[first-style=short]{pam}}
 
 Tal y como se comentó en la sección \ref{sec:motivacion}, la motivación de este trabajo nace de la propuesta de mejora en 
-\cite{tesisIliaBlockin} basada en implementar en el sistema propuesto compatibilidad con otros métodos de autenticación como
+\cite{tesisIliaBlockin} basada en implementar en el sistema propuesto la compatibilidad con otros métodos de autenticación como
 los módulos PAM.
 
 La empresa tecnológica \textit{SunSoft} propuso en 1996 \cite{samar1996unified} un mecanismo de autenticación compatible con 
 multiples tipos de sistemas dando capacidad para administrar no solo la autenticación sino también las sesiones y las contraseñas
 
-Los mecanismos y protocolos de autenticación como por ejemplo \acrfull{ssh}, \acrfull{rlogin} o \acrfull{ftp} tienen como objetivo
+Los mecanismos y protocolos de autenticación como por ejemplo \acf[first-style=short]{ssh}, \acf[first-style=short]{rlogin} o \acf[first-style=short]{ftp} tienen como objetivo
 ser independientes de los mecanismos de autenticación específicos utilizados por las computadoras. No obstante, es importante que 
-se aplique un marco que conectase todos esos mecanismos. Para ello se requiere que las aplicaciones usen una \acrfull{api} estándar
-que interactue con los servicios de autenticación. Si este mecanismo de autenticación al sistema se mantuviera independiente del 
+se aplique un marco que conectase todos esos mecanismos. Para ello se requiere que las aplicaciones usen una \acf[first-style=short]{api} estándar
+que interactúe con los servicios de autenticación. Si este mecanismo de autenticación al sistema se mantuviera independiente del 
 usado por el computador, el administrador del sistema podría instalar módulos de autenticación adecuados sin requerir cambios en 
 las aplicaciones.  
 
@@ -230,13 +256,13 @@ Las propiedades que este mecanismo debe seguir son las siguientes:
 \end{itemize}
 
 Los elementos principales del \textit{framework} PAM son la API (librería de autenticación) considerada el \textit{front-end} y 
-el módulo de autenticación específico, el \textit{back-end}, ambos conectados a través del \acrfull{spi}.
+el módulo de autenticación específico, el \textit{back-end}, ambos conectados a través del \acf[first-style=short]{spi}.
 El proceso consta de los siguientes pasos:
 
 \begin{enumerate}
-    \item La aplicación escribe a la API de pam
+    \item La aplicación escribe a la API de PAM
     \item Se carga el módulo de autenticación apropiado según especifique el archivo de configuración \textit{pam.conf}
-    \item La petición es enviada el módulo de autenticación correspondiente) para llevar a cabo la operación concreta
+    \item La petición es enviada al módulo de autenticación correspondiente para llevar a cabo la operación concreta
     \item PAM devuelve la respuesta desde el módulo de autenticación a la aplicación
 \end{enumerate}
 
@@ -263,8 +289,8 @@ El archivo de configuración PAM (\textit{pam.conf}) es la base de gestión de l
 cuando una aplicación solicita autenticarse usando algún mecanismo que funcione con PAM, la API comprueba los módulos a ejecutar
 en este archivo así como la política que siguen.
 
-El archivo de configuración \ref{code:pam_conf} se ha usado en el broker MQTT para establecer los parametros de configuración 
-siguientes \cite{mosquittoconf_2021}:
+El archivo de configuración \ref{code:pam_conf} se ha usado en el broker MQTT de este trabajo. Define los siguientes parámetros 
+\cite{mosquittoconf_2021}:
 
 \begin{itemize}
     \item \textit{log\_dest}: ruta absoluta del archivo de logs
@@ -272,7 +298,7 @@ siguientes \cite{mosquittoconf_2021}:
     \item \textit{log\_timestamp}: añadir valor de marca de tiempo
     \item \textit{include\_dir}: ruta absoluta del directorio de archivos de configuración externos
     \item \textit{listener}: puerto de escucha
-    \item \textit{cafile}: ruta absoluta del certificado de la \acrfull{ca}
+    \item \textit{cafile}: ruta absoluta del certificado de la \acf[first-style=short]{ca}
     \item \textit{certfile}: ruta absoluta del certificado del broker MQTT
     \item \textit{keyfile}: ruta absoluta de la clave privada del broker MQTT
     \item \textit{allow\_anonymous}: permitir que clientes se puedan conectar sin proporcionar claves (usuario)
@@ -281,16 +307,18 @@ siguientes \cite{mosquittoconf_2021}:
 El cliente \textit{mosquitto} escucha por defecto por el puerto 1883 para comunicaciones no seguras
 y por el 8883 para seguras. El primero solo se usa para comunicaciones internas (\textit{localhost}).
 
-La \acrshort{ca} es una entidad que administra certificados digitales, los cuales son usados para vincular una entidad a una 
-clave pública. Para el presente tranajo, a diferencia de \cite{multipauthpaper}, se ha usado el broker MQTT como \acrshort{ca}. 
-No obstante, la \acrshort{ca} debe correr en un servidor independiente debido a su papel fundamental en la seguridad de toda
-infraestructura.
-
+La \acf[first-style=short]{ca} es una entidad que administra certificados digitales, los cuales son usados para vincular una entidad a una 
+clave pública. Para el presente tranajo, a diferencia de \cite{multipauthpaper}, se ha usado el broker MQTT como \acf[first-style=short]{ca}. 
+No obstante, la \acf[first-style=short]{ca} debe correr en un servidor independiente debido a su papel fundamental en la seguridad de toda
+infraestructura y para facilitar la gestión de nodos que se incorporen a la arquitectura del sistema así como revocar aquellos
+certificados de clientes que no tengan más acceso.
 
 \section{Análisis de herramientas}
+\label{sec:analisis-herramientas}
 
 Para el presente trabajo se ha desarrollado el software usando el lenguaje de programación C dada la facilidad y documentación
 disponible a la hora de desarrollar módulos PAM en dicho lenguaje. 
 Se ha usado \textit{mosquitto} \cite{eclipse_2018} como cliente MQTT dado su extensa documentación, por ser un software de código 
 abierto y estar escrito en C.
-Con respecto al entorno de pruebas, se ha usado Vagrant \cite{vagrant} como orquestador de máquinas virtuales.
+Con respecto al entorno de pruebas, se ha usado Vagrant \cite{vagrant} como orquestador de máquinas virtuales para desplegar el 
+entorno de prueba.

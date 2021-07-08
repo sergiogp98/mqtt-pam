@@ -16,12 +16,14 @@
 \usepackage[acronym,toc]{glossaries}
 \usepackage{amsthm}
 \usepackage{amsfonts}
+\usepackage{acro}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{float}
 \usepackage{pgfplots}
 \pgfplotsset{
   compat=1.12,
 }
-\usepackage{graphicx}
-\usepackage{float}
 
 \decimalpoint
 \usepackage{dcolumn}
@@ -32,8 +34,6 @@
 
 \usepackage{graphicx} %package to manage images
 \graphicspath{ {imagenes/} }
-
-\usepackage{hyperref}
 
 \usepackage{appendix}
 \renewcommand{\appendixname}{Anexos}
@@ -46,7 +46,7 @@
 \newcommand{\myTitleEN}{Double authentication factor system based on Elliptic Curve Criptography\xspace}
 \newcommand{\myDegree}{Grado en Ingeniería Informática\xspace}
 \newcommand{\myName}{Sergio García Prados\xspace}
-\newcommand{\myProf}{Prof. Dr. Antonio Francisco Díaz García\xspace}
+\newcommand{\myProf}{Antonio Francisco Díaz García\xspace}
 \newcommand{\myFaculty}{Escuela Técnica Superior de Ingenierías Informática y de Telecomunicación\xspace}
 \newcommand{\myFacultyShort}{E.T.S. de Ingenierías Informática y de Telecomunicación\xspace}
 \newcommand{\myDepartment}{Departamento de Arquitectura y Tecnoloía de Computadores\xspace}
@@ -54,8 +54,8 @@
 \newcommand{\myLocation}{Granada\xspace}
 \newcommand{\myTime}{\today\xspace}
 \newcommand{\myVersion}{Version 0.1\xspace}
-\newcommand{\myKeywords}{Criptografía, Sistemas operativos, C, Pluggable Authentication Module, Autenticación, Message Queuing Telemetry Transport, Seguridad, Criptografía de Curva Elíptica, Algoritmo de Firma Digital de Curva Elíptica, Computación del Altas Prestaciones, Nube\xspace}
-\newcommand{\myKeywordsEN}{Criptography, Operative System, C, Pluggable Authentication Module, Authentication, Message Queuing Telemetry Transport, Security, Elliptic Curve Criptography, Elliptic Curve Digital Signature Algorithm, High Performance Computing, Cloud}
+\newcommand{\myKeywords}{Criptografía, Sistemas operativos, C, Pluggable Authentication Module, Autenticación, Message Queuing Telemetry Transport, Seguridad, Criptografía de Curva Elíptica, Algoritmo de Firma Digital de Curva Elíptica\xspace}
+\newcommand{\myKeywordsEN}{Criptography, Operative System, C, Pluggable Authentication Module, Authentication, Message Queuing Telemetry Transport, Security, Elliptic Curve Criptography, Elliptic Curve Digital Signature Algorithm\xspace}
 
 %------------------ HEADERS AND FOOTERS ------------------------%
 
@@ -163,6 +163,7 @@
 
 \tableofcontents
 \listoffigures
+\renewcommand{\listtablename}{Índice de tablas}
 \listoftables
 
 \input{capitulos/introduccion.tex}
@@ -171,6 +172,7 @@
 \input{capitulos/diseno.tex}
 \input{capitulos/analisis-seguridad.tex}
 \input{capitulos/presupuesto.tex}
+\input{capitulos/conclusion.tex}
 
 \cleardoublepage
 
@@ -183,6 +185,7 @@
 
 \clearpage
 
-\printglossary[type=\acronymtype, title=Acrónimos, toctitle=Acrónimos]
+\addcontentsline{toc}{chapter}{Acrónimos}
+\printacronyms[name=Acrónimos]
 
 \end{document}

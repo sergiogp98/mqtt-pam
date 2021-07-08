@@ -32,8 +32,6 @@
     client-1,68263723-e928-4f71-8339-c609478f0a1a   
 \end{lstlisting}
 
-\clearpage
-
 \begin{lstlisting}[style=Consola, caption={Archivo de configuración anubis en /etc/anubis/anubis.conf}, label={code:anubis_conf}]
     # ------------------------#
     # /etc/anubis/anubis.conf
@@ -56,3 +54,183 @@
     access_type relax   
 \end{lstlisting}
 
+\begin{lstlisting}[style=Consola, caption={Petición SSH cliente al servidor}, label={code:ssh-request}]
+    vagrant@client-1:~$ ssh client-1@172.16.1.101
+    client-1@172.16.1.101's password:
+    Found UUID in user client-1: 68263723-e928-4f71-8339-c609478f0a1a
+    Client server_2941 sending CONNECT
+    Client server_2941 sending SUBSCRIBE (Mid: 1, Topic: 68263723-e928-4f71-8339-c609478f0a1a/pam/r, QoS: 0, Options: 0x00)
+    Client server_2941 sending SUBSCRIBE (Mid: 1, Topic: 68263723-e928-4f71-8339-c609478f0a1a/pam/s, QoS: 0, Options: 0x00)
+    Client server_2941 sending PUBLISH (d0, q0, r0, m2, 'pam/68263723-e928-4f71-8339-c609478f0a1a/challenge', ... (64 bytes))
+    Client server_2941 received CONNACK (0)
+    Client server_2941 received SUBACK
+    Client server_2941 received PUBLISH (d0, q0, r0, m0, '68263723-e928-4f71-8339-c609478f0a1a/pam/r', ... (130 bytes))
+    Client server_2941 received PUBLISH (d0, q0, r0, m0, '68263723-e928-4f71-8339-c609478f0a1a/pam/s', ... (130 bytes))
+    Successfully verified
+    Exiting...
+    Client server_2941 sending DISCONNECT
+    PAM OK
+    Welcome to Ubuntu 20.04.2 LTS (GNU/Linux 5.4.0-74-generic x86_64)
+
+    * Documentation:  https://help.ubuntu.com
+    * Management:     https://landscape.canonical.com
+    * Support:        https://ubuntu.com/advantage
+
+    System information as of Mon Jun 21 21:19:03 UTC 2021
+
+    System load:  0.0               Processes:               109
+    Usage of /:   7.0% of 38.71GB   Users logged in:         1
+    Memory usage: 41%               IPv4 address for enp0s3: 10.0.2.15
+    Swap usage:   0%                IPv4 address for enp0s8: 172.16.1.101
+
+    * Super-optimized for small spaces - read how we shrank the memory
+    footprint of MicroK8s to make it the smallest full K8s around.
+
+    https://ubuntu.com/blog/microk8s-memory-optimisation
+
+    38 updates can be applied immediately.
+    To see these additional updates run: apt list --upgradable
+
+
+    Last login: Mon Jun 21 21:11:24 2021 from 172.16.1.111
+    client-1@server-1:~$
+\end{lstlisting}
+
+\begin{lstlisting}[style=Consola, caption={Salida script cliente}, label={code:client-script}]
+    vagrant@client-1:~/tfg/bin$ ./client broker.mqtt.com 8883 68263723-e928-4f71-8339-c609478f0a1a /etc/mosquitto/ca_certificates/ca.crt
+    Client 68263723-e928-4f71-8339-c609478f0a1a sending CONNECT
+    Client 68263723-e928-4f71-8339-c609478f0a1a sending SUBSCRIBE (Mid: 1, Topic: pam/68263723-e928-4f71-8339-c609478f0a1a/challenge, QoS: 0, Options: 0x00)
+    Listening to pam/68263723-e928-4f71-8339-c609478f0a1a/challenge topic...
+    Client 68263723-e928-4f71-8339-c609478f0a1a received CONNACK (0)
+    Client 68263723-e928-4f71-8339-c609478f0a1a received SUBACK
+    Client 68263723-e928-4f71-8339-c609478f0a1a received PUBLISH (d0, q0, r0, m0, 'pam/68263723-e928-4f71-8339-c609478f0a1a/challenge', ... (64 bytes))
+    Received challenge: ITOeM0joCRNR5dm.hWS5O7BaxvE8UdE7SMoPKoQck5WhhYu1di2KrBrxGsG6o76
+    Client 68263723-e928-4f71-8339-c609478f0a1a sending PUBLISH (d0, q0, r0, m2, '68263723-e928-4f71-8339-c609478f0a1a/pam/r', ... (130 bytes))
+    Client 68263723-e928-4f71-8339-c609478f0a1a sending PUBLISH (d0, q0, r0, m3, '68263723-e928-4f71-8339-c609478f0a1a/pam/s', ... (130 bytes))
+    Exiting...
+    Client 68263723-e928-4f71-8339-c609478f0a1a sending DISCONNECT
+\end{lstlisting}
+
+\begin{lstlisting}[style=Consola, caption={Archivo de configuración PAM para sshd}, label={code:pam-sshd}]
+    # PAM configuration for the Secure Shell service
+
+    # MQTT PAM module
+    auth required mqtt-pam.so broker.mqtt.com 8883 /etc/mosquitto/ca_certificates/ca.crt
+
+    # Standard Un*x authentication.
+    @include common-auth
+
+    # Disallow non-root logins when /etc/nologin exists.
+    account    required     pam_nologin.so
+
+    # Uncomment and edit /etc/security/access.conf if you need to set complex
+    # access limits that are hard to express in sshd_config.
+    # account  required     pam_access.so
+
+    # Standard Un*x authorization.
+    @include common-account
+
+    # SELinux needs to be the first session rule.  This ensures that any
+    # lingering context has been cleared.  Without this it is possible that a
+    # module could execute code in the wrong domain.
+    session [success=ok ignore=ignore module_unknown=ignore default=bad]        pam_selinux.so close
+
+    # Set the loginuid process attribute.
+    session    required     pam_loginuid.so
+
+    # Create a new session keyring.
+    session    optional     pam_keyinit.so force revoke
+
+    # Standard Un*x session setup and teardown.
+    @include common-session
+
+    # Print the message of the day upon successful login.
+    # This includes a dynamically generated part from /run/motd.dynamic
+    # and a static (admin-editable) part from /etc/motd.
+    session    optional     pam_motd.so  motd=/run/motd.dynamic
+    session    optional     pam_motd.so noupdate
+
+    # Print the status of the user's mailbox upon successful login.
+    session    optional     pam_mail.so standard noenv # [1]
+
+    # Set up user limits from /etc/security/limits.conf.
+    session    required     pam_limits.so
+
+    # Read environment variables from /etc/environment and
+    # /etc/security/pam_env.conf.
+    session    required     pam_env.so # [1]
+    # In Debian 4.0 (etch), locale-related environment variables were moved to
+    # /etc/default/locale, so read that as well.
+    session    required     pam_env.so user_readenv=1 envfile=/etc/default/locale
+
+    # SELinux needs to intervene at login time to ensure that the process starts
+    # in the proper default security context.  Only sessions which are intended
+    # to run in the user's context should be run after this.
+    session [success=ok ignore=ignore module_unknown=ignore default=bad]        pam_selinux.so open
+
+    # Standard Un*x password updating.
+    @include common-password
+\end{lstlisting}
+
+\begin{lstlisting}[language=Ruby, caption={Archivo de configuración Vagrantfile}, label={code:vagrantfile}]
+    n_servers = 2
+    n_clients = 1
+    
+    server_net = "172.16.1.10"
+    client_net = "172.16.1.11"
+    broker_mqtt_net = "172.16.1.100"
+    
+    def add_ssh_key(config)
+        ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+        config.vm.provision "shell" do |s|
+          s.inline = <<-SHELL
+            echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys
+            mkdir -p /root/.ssh/
+            chmod 700 /root/.ssh/
+            echo #{ssh_pub_key} >> /root/.ssh/authorized_keys
+          SHELL
+        end
+    end
+    
+    Vagrant.configure("2") do |config|
+        config.vm.synced_folder ".", "/home/vagrant/tfg"
+    
+        (1..n_servers).each do |i|
+            config.vm.define "server-#{i}" do |node|
+                node.vm.network :private_network, ip: "#{server_net}#{i}"
+                node.vm.box = "ubuntu/focal64"
+                node.vm.provider "virtualbox" do     |pmv|
+                    pmv.memory = 512
+                    pmv.cpus   = 1
+                end
+                node.vm.hostname = "server-#{i}"
+                add_ssh_key(config)
+            end
+        end
+    
+        (1..n_clients).each do |i|
+            config.vm.define "client-#{i}" do |node|
+                node.vm.network :private_network, ip: "#{client_net}#{i}"
+                node.vm.box = "ubuntu/focal64"
+                node.vm.provider "virtualbox" do |pmv|
+                    pmv.memory = 512
+                    pmv.cpus   = 1
+                end
+                node.vm.hostname = "client-#{i}"
+                add_ssh_key(config)
+            end
+            
+        end
+    
+        config.vm.define "broker-mqtt" do |node|
+            node.vm.network :private_network, ip: "#{broker_mqtt_net}"
+            node.vm.box = "ubuntu/focal64"
+            node.vm.provider "virtualbox" do |pmv|
+                pmv.memory = 512
+                pmv.cpus   = 1
+            end
+            node.vm.hostname = "broker-mqtt"
+            add_ssh_key(config)
+        end
+    end        
+\end{lstlisting}
