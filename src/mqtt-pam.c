@@ -1,3 +1,12 @@
+/**
+ * Server side script which runs the authentication method. Functionalities
+ * - Challenge creation
+ * - Recreate EC sign from client
+ * - Verify EC sign using client pub key and challenge hash
+ * @author Sergio Garcia https://github.com/sergiogp98
+ * @version v1.0
+ */
+
 #include <stdio.h>
 #include <errno.h>
 #include <mosquitto.h>
@@ -11,10 +20,12 @@
 #include "../include/utils.h"
 #include "../include/mqtt.h"
 #include "../include/uuid.h"
-#include "../include/file.h"
+#include "../include/ssl.h"
+#include "../include/conf.h"
 
 #define ANUBIS "/home/%s/.anubis/%s.pub"
 #define UUID_CSV "/etc/anubis/uuid.csv"
+#define CONF_FILE "/etc/anubis/anubis.conf"
 
 // Global vars
 
@@ -26,7 +37,12 @@ int get_r_value = 0;
 int get_s_value = 0;
 struct EC_SIGN sign;
 
-// Mosquitto message callback
+/**
+ * Callback function which run whenever a message is received from a subscribed topic
+ * @param mosq mosquitto instance making the callback
+ * @param obj user data provided in mosquitto_new
+ * @param message the message data
+ */
 void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
 	bool match_r_value_topic;
@@ -83,12 +99,21 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 	}
 }
 
+/**
+ * Link which function to use when using a specific callback
+ * @param mosq mosquitto instance making the callback
+ */
 void set_callbacks(struct mosquitto *mosq)
 {
 	mosquitto_message_callback_set(mosq, message_callback);
 	mosquitto_log_callback_set(mosq, log_callback);
 }
 
+/**
+ * Start server function
+ * @param mosq mosquitto instance
+ * @return status of publishing challenge to specific topic
+ */
 int server_start(struct mosquitto *mosq)
 {
 	int retval = 0;
@@ -119,14 +144,23 @@ int server_start(struct mosquitto *mosq)
 	return retval;
 }
 
-/* expected hook, this is where custom stuff happens */
+/**
+ * PAM authenticate module hook function. Whenever a client request to open a SSH session, this function is executed
+ * @param pamh PAM handler
+ * @param flags optional flag
+ * @param argc number of arguments
+ * @param argv array of arguments 
+ * @return PAM_SUCCESS if verification is correct (strict policy)
+ * @return PAM_IGNORE if client comes from trusted IP address (relax policy)
+ * @return PAM_AUTH_ERR if verification fails (strict policy) 
+ */
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-	if (argc != 2)
-	{
-		fprintf(stderr, "Usage: ./server <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT>\n");
-		return PAM_ABORT;
-	}
+	if (argc != 3)
+    {
+        fprintf(stderr, "Usage: ./server <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT> <CA_FILE>\n");
+        return 1;
+    }
 
 	const char *pam_user;
 	char server_id[ID_SIZE];
@@ -134,68 +168,93 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 	int broker_port = 0;
 	struct mosquitto *server = NULL;
 	int retval = PAM_AUTH_ERR;
-
+	char cafile[MAX_PATH_LEN];
+	struct USER_UUID data;
+	struct CONF_PARAMS params;
+	
 	// Save broker host and port
 	set_buffer(broker_host, ID_SIZE, argv[0]);
 	broker_port = atoi(argv[1]);
+
+	// Save ca file
+	set_buffer(cafile, MAX_PATH_LEN, argv[2]);
 
 	// Get username
 	pam_get_user(pamh, &pam_user, "Username: ");
 	set_buffer(username, MAX_USERNAME_LEN, pam_user);
 
 	// Get UUID from username
-	set_buffer(uuid, UUID_STR_LEN, get_uuid(UUID_CSV, username));
-
-	if (uuid != NULL)
+	if (get_uuid(UUID_CSV, username, &data))
 	{
+		set_buffer(uuid, UUID_STR_LEN, data.uuid);
 		printf("Found UUID in user %s: %s\n", username, uuid);
 
-		mosquitto_lib_init();
+		// Get config params
+		if (read_conf(CONF_FILE, &params) == -1)
+		{
+			fprintf(stderr, "%s: invalid policy. Please use relax or strict\n", CONF_FILE);
+			exit(1);
+		}
 
+		mosquitto_lib_init();
+		
 		set_id(server_id, ID_SIZE, "server");
 		server = mosquitto_new(server_id, true, NULL);
 		if (server)
 		{
-			set_callbacks(server);
-			if (connect_to_broker(server, broker_host, broker_port) == MOSQ_ERR_SUCCESS)
+			// Set TLS connection
+			if (set_tls_connection(server, cafile) == MOSQ_ERR_SUCCESS)
 			{
-				if (server_start(server) == MOSQ_ERR_SUCCESS)
+				set_callbacks(server);
+				if (connect_to_broker(server, broker_host, broker_port) == MOSQ_ERR_SUCCESS)
 				{
-					mosquitto_loop_start(server);
-					mosquitto_loop_forever(server, -1, 1);
-					if (verify != 1)
+					if (server_start(server) == MOSQ_ERR_SUCCESS)
 					{
-						printf("PAM DENY\n");
+						mosquitto_loop_start(server);
+						mosquitto_loop_forever(server, -1, 1);
+						
+						if (verify != 1) // Not verified
+						{
+							if (params.access_type == 0) // Relax access
+							{
+								retval = PAM_IGNORE;
+								printf("PAM IGNORE\n");
+							}
+							else // Strict access
+							{
+								retval = PAM_AUTH_ERR;
+								printf("PAM_AUTH_ERR");
+							}
+						}
+						else // Verified
+						{
+							retval = PAM_SUCCESS;
+							printf("PAM_SUCCESS\n");
+						}
 					}
 					else
 					{
-						printf("PAM OK\n");
-						retval = PAM_SUCCESS;
+						fprintf(stderr, "Unable to start server\n");
 					}
 				}
 				else
 				{
-					fprintf(stderr, "Unable to start server\n");
+					fprintf(stderr, "Unable to connect to broker\n");
 				}
 			}
-			else
-			{
-				fprintf(stderr, "Unable to connect to broker\n");
-			}
-
 			mosquitto_destroy(server);
 		}
 		else
 		{
 			perror("mosquitto_new");
 		}
+
+		mosquitto_lib_cleanup();
 	}
 	else
 	{
-		fprintf(stderr, "User %s has not and UUID assigned\n", username);
+		fprintf(stderr, "User %s has not an UUID assigned\n", username);
 	}
-
-	mosquitto_lib_cleanup();
 
 	return retval;
 }

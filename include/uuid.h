@@ -1,3 +1,7 @@
+/**
+ * Header file with functions related to UUID processing
+ */
+
 #ifndef UUID_H_
 #define UUID_H_
 
@@ -9,9 +13,11 @@
 #include <uuid/uuid.h>
 
 #define UUID_CSV "/etc/anubis/uuid.csv"
-#define MAX_USERS 128
 #define LINE_LEN 128
 
+/**
+ * Struct referencing CSV anubis file values (user,uuid)
+ */
 struct USER_UUID
 {
     char *user;
@@ -30,6 +36,10 @@ struct USER_UUID
  */
 
 
+/**
+ * Create random UUID using defined parameters
+ * @return UUID value
+ */
 char *create_uuid() {
     uuid_t binuuid;
     /*
@@ -66,7 +76,36 @@ char *create_uuid() {
     return uuid;
 }
 
-char *get_uuid(char *filename, const char *username)
+/**
+ * Check whether UUID string has the appropiate name
+ * @param uuid UUID value
+ * @return success checking uuid has the apropiate value
+ */
+int check_uuid_regex(const char *uuid)
+{
+    const char *exp = "[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*-[a-z0-9]*";
+    int match = 0;
+    regex_t regex;
+        
+    if (regcomp(&regex, exp, 0) == 0)
+    {
+        if (regexec(&regex, uuid, 0, NULL, 0) == 0)
+        {
+            match = 1;
+        }
+    }
+
+    return match;
+}
+
+/**
+ * Get UUID value associate to username in filename
+ * @param filename path to CSV file with key pairs username,uuid
+ * @param username username to check UUID to
+ * @param data struct which save key pair user,uuid (if username has UUID assigned)
+ * @return found UUID of username
+ */
+int get_uuid(char *filename, const char *username, struct USER_UUID *data)
 {
     FILE *file;
     int i;
@@ -74,7 +113,6 @@ char *get_uuid(char *filename, const char *username)
     const char delim[2] = ",";
     int found = 0;
     char *tok;
-    struct USER_UUID data;
 
     // Open CSV file
     file = fopen(filename, "r");
@@ -88,22 +126,26 @@ char *get_uuid(char *filename, const char *username)
     {
         // Get username
         tok = strtok(line, delim);
-        data.user = tok;
 
         // Compare user
-        if (strcmp(data.user, username) == 0)
+        if (strcmp(tok, username) == 0)
         {
+            data->user = tok; // Save username
+
             // Get UUID
             tok = strtok(NULL, delim);
             tok[strlen(tok)-1] = 0; //remove final "\n"
-            data.uuid = tok;
-            found = 1;
+            if (check_uuid_regex(tok))
+            {
+                data->uuid = tok; // Save UUID
+                found = 1;
+            }
         }        
     }
 
     fclose(file);
 
-    return data.uuid;
+    return found;
 }
 
 #endif 

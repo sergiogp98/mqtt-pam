@@ -1,4 +1,6 @@
-/* Create EC key and write them to .anubis directory in home */
+/**
+ * Create EC key (public and private) and write them to .anubis directory in home
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +11,12 @@
 
 #define MODE S_IRWXU
 
+/**
+ * Create public and private key files in anubis directory
+ * @param name filename of both files
+ * @param pub_key public key absolute path
+ * @param priv_key private key absolute path
+ */
 void create_pem_filenames(const char *name, char *pub_key, char *priv_key)
 {
     char *anubis = strcat(getenv("HOME"), "/.anubis/");
@@ -18,6 +26,12 @@ void create_pem_filenames(const char *name, char *pub_key, char *priv_key)
     strcat(strcat(priv_key, name), ".key");
 }
 
+/**
+ * Main function
+ * @param argc number of arguments
+ * @param argv array with arguments
+ * @return Success creating key pair
+ */
 int main(int argc, const char *argv)
 {
     const char *uuid = create_uuid();

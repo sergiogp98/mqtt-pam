@@ -1,7 +1,6 @@
-/*
-Doc: https://www.gnu.org/software/libc/manual/html_mono/libc.html#Unpredictable-Bytes
-https://www.openssl.org/docs/manmaster/man3/SHA512.html
-*/
+/**
+ * Header file with functions related with OpenSSL methods
+ */
 
 #ifndef SHA_H_
 #define SHA_H_
@@ -15,6 +14,10 @@ https://www.openssl.org/docs/manmaster/man3/SHA512.html
 #define CHALLENGE_SIZE 64
 #define HASH_SIZE SHA512_DIGEST_LENGTH
 
+/**
+ * Apply SHA-512 hash algorithm to digest value
+ * @return SHA-512 hash value
+ */
 char* sha512(const char *digest)
 {
     static char buffer[SHA512_DIGEST_LENGTH];
@@ -41,6 +44,10 @@ char* sha512(const char *digest)
     return buffer;
 }  
 
+/**
+ * Create new challenge
+ * @return challenge
+ */
 char *get_challenge()
 {
     unsigned char ubytes[CHALLENGE_SIZE];

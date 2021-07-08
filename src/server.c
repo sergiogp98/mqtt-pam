@@ -1,3 +1,12 @@
+/**
+ * Server side script which runs the authentication method. Functionalities
+ * - Challenge creation
+ * - Recreate EC sign from client
+ * - Verify EC sign using client pub key and challenge hash
+ * @author Sergio Garcia https://github.com/sergiogp98
+ * @version v1.0
+ */
+
 #include <stdio.h>
 #include <errno.h>
 #include <mosquitto.h>
@@ -11,10 +20,14 @@
 #include "../include/utils.h"
 #include "../include/mqtt.h"
 #include "../include/uuid.h"
-#include "../include/file.h"
+#include "../include/ssl.h"
+#include "../include/conf.h"
+
+// Env variables
 
 #define ANUBIS "/home/%s/.anubis/%s.pub"
 #define UUID_CSV "/etc/anubis/uuid.csv"
+#define CONF_FILE "/etc/anubis/anubis.conf"
 
 // Global vars
 
@@ -28,7 +41,6 @@ struct EC_SIGN sign;
 
 
 
-// Mosquitto message callback
 void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
 	bool match_r_value_topic;
@@ -62,7 +74,6 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 
 		if ((signature = get_ec_sig(sign.r, sign.s)) != NULL)
 		{
-			set_buffer(username, MAX_USERNAME_LEN, "client-1");
 			sprintf(pemfile, ANUBIS, username, uuid);
 			pub_key = get_pub_key_from_pem(pemfile); // Get Pub-key from pem file in user .anubis directory
 			if (pub_key != NULL) 
@@ -76,7 +87,7 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 				case 0:
 					fprintf(stderr, "Invalid signature\n");
 					break;
-				default:
+				default: //1
 					printf("Successfully verified\n");
 					break;
 				}
@@ -91,6 +102,7 @@ void set_callbacks(struct mosquitto *mosq)
 	mosquitto_message_callback_set(mosq, message_callback);
 	mosquitto_log_callback_set(mosq, log_callback);
 }
+
 
 int server_start(struct mosquitto *mosq)
 {
@@ -122,12 +134,12 @@ int server_start(struct mosquitto *mosq)
 	return retval;
 }
 
-// Main
+
 int main(int argc, char *argv[])
 {
-	if (argc != 3)
+	if (argc != 4)
     {
-        fprintf(stderr, "Usage: ./server <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT>\n");
+        fprintf(stderr, "Usage: ./server <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT> <CA_FILE>\n");
         return 1;
     }
 
@@ -135,66 +147,90 @@ int main(int argc, char *argv[])
 	char broker_host[MAX_HOSTNAME_LEN];
 	int broker_port = 0;
     struct mosquitto *server = NULL;
-    int retval = 0;
-	
-    // Check host and port
+    int retval;
+	char cafile[MAX_PATH_LEN];
+	struct USER_UUID data;
+	struct CONF_PARAMS params;
 
+    // Save broker host and port
     set_buffer(broker_host, ID_SIZE, argv[1]);
     broker_port = atoi(argv[2]);
 
+	// Save ca file
+	set_buffer(cafile, MAX_PATH_LEN, argv[3]);
+
 	// Get UUID from username
-	set_buffer(uuid, UUID_STR_LEN, get_uuid(UUID_CSV, "client-1"));
-	if (uuid != NULL)
+	set_buffer(username, MAX_USERNAME_LEN, "client-1");
+	if (get_uuid(UUID_CSV, username, &data))
 	{
-		printf("Found UUID in user %s: %s\n", "client-1", uuid);
-	}
-	else
-	{
-		fprintf(stderr, "User %s has not and UUID assigned\n", "client-1");
-		exit(1);
-	}
+		set_buffer(uuid, UUID_STR_LEN, data.uuid);
+		printf("Found UUID in user %s: %s\n", username, uuid);
 
-	mosquitto_lib_init();
-
-	set_id(server_id, ID_SIZE, "server");
-	server = mosquitto_new(server_id, true, NULL);
-	if (server)
-	{
-		set_callbacks(server);
-		if (connect_to_broker(server, broker_host, broker_port) == MOSQ_ERR_SUCCESS)
+		// Get config params
+		if (!read_conf(CONF_FILE, &params))
 		{
-			if (server_start(server) == MOSQ_ERR_SUCCESS)
+			fprintf(stderr, "Error reading %s file\n", CONF_FILE);
+			exit(1);
+		}
+
+		mosquitto_lib_init();
+
+		set_id(server_id, ID_SIZE, "server");
+		server = mosquitto_new(server_id, true, NULL);
+		if (server)
+		{
+			// Set TLS connection
+			if (set_tls_connection(server, cafile) == MOSQ_ERR_SUCCESS)
 			{
-				mosquitto_loop_start(server);
-				mosquitto_loop_forever(server, -1, 1);
-				if (verify != 1)
+				set_callbacks(server);
+				if (connect_to_broker(server, broker_host, broker_port) == MOSQ_ERR_SUCCESS)
 				{
-					printf("PAM DENY\n");
-					retval = PAM_AUTH_ERR;
+					if (server_start(server) == MOSQ_ERR_SUCCESS)
+					{
+						mosquitto_loop_start(server);
+						mosquitto_loop_forever(server, -1, 1);
+
+						if (verify != 1) // Not verified
+						{
+							if (params.access_type == 0) // Relax access
+							{
+								retval = PAM_IGNORE;
+								printf("PAM IGNORE\n");
+							}
+							else // Strict access
+							{
+								retval = PAM_AUTH_ERR;
+								printf("PAM_AUTH_ERR");
+							}
+						}
+						else // Verified
+						{
+							retval = PAM_SUCCESS;
+							printf("PAM_SUCCESS\n");
+						}
+					}
+					else
+					{
+						fprintf(stderr, "Unable to start server\n");
+					}
 				}
 				else
 				{
-					printf("PAM OK\n");
-					retval = PAM_SUCCESS;
+					fprintf(stderr, "Unable to connect to broker\n");
 				}
-			}
-			else
-			{
-				fprintf(stderr, "Unable to start server\n");
-			}
+			}	
+			mosquitto_destroy(server);
 		}
 		else
 		{
-			fprintf(stderr, "Unable to connect to broker\n");
+			perror("mosquitto_new");
 		}
-
-		mosquitto_destroy(server);
 	}
 	else
 	{
-		perror("mosquitto_new");
+		fprintf(stderr, "User %s has not and UUID assigned\n", username);
 	}
-	
+
 	mosquitto_lib_cleanup();
 
 	return retval;

@@ -1,3 +1,7 @@
+/**
+ * Header file with functions related with ECDSA
+ */
+
 #ifndef ECDSA_H_
 #define ECDSA_H_
 
@@ -28,25 +32,11 @@ struct EC_SIGN
     unsigned char *s; // s value (HEX format)
 };
 
-void print_keys(EC_KEY *ec_key)
-{
-    EVP_PKEY *pkey = NULL;
-    BIO *outbio = NULL;
-
-    outbio = BIO_new(BIO_s_file());
-    outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
-
-    pkey = EVP_PKEY_new();
-    if (!EVP_PKEY_assign_EC_KEY(pkey, ec_key))
-        BIO_printf(outbio, "Error assigning ECC key to EVP_PKEY structure\n");
-
-    if (!PEM_write_bio_PrivateKey(outbio, pkey, NULL, NULL, 0, 0, NULL))
-        BIO_printf(outbio, "Error writing private key data in PEM format\n");
-
-    if (!PEM_write_bio_PUBKEY(outbio, pkey))
-        BIO_printf(outbio, "Error writing public key data in PEM format\n");
-}
-
+/**
+ * Create new EC key pair
+ * @param ec_key EC key pair
+ * @return success creation keys 
+ */
 int create_keys(EC_KEY *ec_key)
 {
     int retval = 1;
@@ -64,12 +54,16 @@ int create_keys(EC_KEY *ec_key)
     return retval;
 }
 
+/**
+ * Write EC key pair to PEM format
+ * @param ec_key EC key pair
+ * @param priv_key private key in PEM format
+ * @param pub_key public key in PEM format
+ */
 void write_key_to_pem(EC_KEY *ec_key, char *priv_key, char *pub_key)
 {
     DIR *dir;
     EVP_PKEY *pkey = NULL;
-    //BIO *priv_key_bio = NULL;
-    //BIO *pub_key_bio = NULL;
     FILE *priv_key_file;
     FILE *pub_key_file;
 
@@ -80,8 +74,6 @@ void write_key_to_pem(EC_KEY *ec_key, char *priv_key, char *pub_key)
         fprintf(stderr, "Error opening %s\n", priv_key);
         exit(1);
     }
-    //priv_key_bio = BIO_new(BIO_s_file());
-    //priv_key_bio = BIO_new_fp(priv_key_file, BIO_NOCLOSE);
 
     // Set public key (file nad bio)
     pub_key_file = fopen(pub_key, "wr");
@@ -90,8 +82,6 @@ void write_key_to_pem(EC_KEY *ec_key, char *priv_key, char *pub_key)
         fprintf(stderr, "Error opening %s\n", pub_key);
         exit(1);
     }
-    //pub_key_bio = BIO_new(BIO_s_file());
-    //pub_key_bio = BIO_new_fp(pub_key_file, BIO_NOCLOSE);
 
     // Set keys to pkey
     pkey = EVP_PKEY_new();
@@ -109,75 +99,11 @@ void write_key_to_pem(EC_KEY *ec_key, char *priv_key, char *pub_key)
     fclose(pub_key_file);
 }
 
-ECDSA_SIG *ec_sign(const unsigned char *digest, int len, EC_KEY *ec_key)
-{
-    int retval = 1;
-    ECDSA_SIG *signature;
-
-    signature = ECDSA_do_sign(digest, len, ec_key);
-    if (signature != NULL)
-    {
-        printf("Signed digest\n");
-    }
-    else
-    {
-        fprintf(stderr, "Failed to generate EC Signature\n");
-        retval = 0;
-    }
-
-    return signature;
-}
-
-int ec_verify(const unsigned char *digest, int len, ECDSA_SIG *signature, EC_KEY *pub_key)
-{
-    int retval = 1;
-
-    if (ECDSA_do_verify(digest, strlen(digest), signature, pub_key))
-    {
-        printf("Verifed EC Signature\n");
-    }
-    else
-    {
-        fprintf(stderr, "Failed to verify EC Signature\n");
-        retval = 0;
-    }
-
-    return retval;
-}
-
-char *pub_key_to_hex(const EC_KEY *ec_key)
-{
-    int retval = 0;
-    BN_CTX *ctx;
-    char *hex_pub_key;
-
-    ctx = BN_CTX_new();
-    if (ctx) /* Handle error */
-    {
-        hex_pub_key = EC_POINT_point2hex(
-            EC_KEY_get0_group(ec_key),
-            EC_KEY_get0_public_key(ec_key),
-            POINT_CONVERSION_COMPRESSED,
-            ctx);
-
-        if (hex_pub_key != NULL)
-        {
-            retval = 1;
-        }
-        else
-        {
-            fprintf(stderr, "Unable to convert EC_POINT to HEX\n");
-        }
-    }
-    else
-    {
-        fprintf(stderr, "Error creating BN_CTX\n");
-    }
-    BN_CTX_free(ctx);
-
-    return hex_pub_key;
-}
-
+/**
+ * Convert EC sign r value to HEX format
+ * @param signature EC signature
+ * @return HEX EC signature r value
+ */
 char *r_value_to_hex(const ECDSA_SIG *signature)
 {
     char *r_hex;
@@ -199,6 +125,11 @@ char *r_value_to_hex(const ECDSA_SIG *signature)
     return r_hex;
 }
 
+/**
+ * Convert EC sign s value to HEX format
+ * @param signature EC signature
+ * @return HEX EC signature s value
+ */
 char *s_value_to_hex(const ECDSA_SIG *signature)
 {
     char *s_hex;
@@ -220,6 +151,12 @@ char *s_value_to_hex(const ECDSA_SIG *signature)
     return s_hex;
 }
 
+/**
+ * Get EC signature from r and s HEX values 
+ * @param r_hex r HEX value
+ * @param s_hex s HEX value
+ * @return EC signature
+ */
 ECDSA_SIG *get_ec_sig(const char *r_hex, const char *s_hex)
 {
     ECDSA_SIG *signature = NULL;
@@ -249,46 +186,11 @@ ECDSA_SIG *get_ec_sig(const char *r_hex, const char *s_hex)
     return signature;
 }
 
-void print_error(const char *label, unsigned long err)
-{
-    static char buffer[120 * sizeof(uint8_t)];
-    ERR_error_string(err, buffer);
-    fprintf(stderr, "%s: %s\n", label, buffer);
-}
-
-EC_KEY *get_ec_key(const unsigned char *ec_point_hex)
-{
-    EC_KEY *ec_key;
-    EC_POINT *ec_point;
-    BN_CTX *ctx;
-
-    ec_key = EC_KEY_new_by_curve_name(ECCTYPE);
-    ec_point = EC_POINT_new(EC_GROUP_new_by_curve_name(ECCTYPE));
-    ctx = BN_CTX_new();
-    if (ctx) /* Handle error */
-    {
-        ec_point = EC_POINT_hex2point(
-            EC_GROUP_new_by_curve_name(ECCTYPE),
-            ec_point_hex,
-            ec_point,
-            ctx);
-
-        if (ec_point != NULL)
-        {
-            if (EC_KEY_set_public_key(ec_key, ec_point) == 0)
-            {
-                fprintf(stderr, "Failed to create EC_KEY with EC_POINT\n");
-            }
-        }
-        else
-        {
-            fprintf(stderr, "Failed to create EC_POINT with from HEX format\n");
-        }
-    }
-
-    return ec_key;
-}
-
+/**
+ * Get EC public key from PEM file
+ * @param pemfile PEM file
+ * @return EC public key
+ */
 EC_KEY *get_pub_key_from_pem(const char *pemfile)
 {
     FILE *file;
@@ -310,6 +212,11 @@ EC_KEY *get_pub_key_from_pem(const char *pemfile)
     return pub_key;
 }
 
+/**
+ * Get EC private key from PEM file
+ * @param pemfile PEM file
+ * @return EC private key
+ */
 EC_KEY *get_priv_key_from_pem(const char *pemfile)
 {
     FILE *file;
@@ -332,128 +239,13 @@ EC_KEY *get_priv_key_from_pem(const char *pemfile)
     return priv_key;
 }
 
-/*Check whether there is only one PEM key pair inside path*/
-/*char *get_pem_filename(const char *path)
-{
-    char *pemfile = NULL;
-    DIR *dir;
-    struct dirent *file;
-    int more_than_one = 0;
-    struct stat *file_stat;
-    int found = 0;
-    char *uuid = NULL;
-
-    // Open directory
-    dir = opendir(path);
-    if (dir != NULL)
-    {
-        while ((file = readdir(dir)) != NULL && !more_than_one)
-        {
-            stat(file->d_name, file_stat);
-            if (S_ISREG(file_stat->st_mode) &&
-                check_uuid_regex(file->d_name) &&
-                (check_extension(file->d_name, ".pub") ||
-                 check_extension(file->d_name, ".key")))
-            {
-                if (file_stat->st_size > 0)
-                {
-                    if (file_stat->st_mode & S_IRUSR)
-                    {
-                        if (!found || uuid == NULL)
-                        {
-                            uuid = get_filename(file->d_name);
-                        }
-                        else if (strcmp(uuid, get_filename(file->d_name)) == 0)
-                        {
-                            found = 1;
-                            pemfile = uuid;
-                        }
-                        else
-                        {
-                            more_than_one = 1;
-                            fprintf(stderr, "There is more than one PEM key pair in %s\n", dir);
-                        }
-                    }
-                    else
-                    {
-                        fprintf(stderr, "Found PEM file in %s with no user read permission\n", anubis);
-                    }
-                }
-                else
-                {
-                    fprintf(stderr, "%s file in %s is empty\n", file->d_name, dir);
-                }
-            }
-        }
-    }
-    else
-    {
-        const char *err_msg = strcat("Error opening", path);
-        perror(err_msg);
-    }
-
-    return pemfile;
-}*/
-
-/*EC_KEY *get_priv_key(const char *pem_dir)
-{
-    char *pemfile;
-    EC_KEY *priv_key = NULL;
-
-    // Open directory
-    const char *uuid = get_pem_filename(pem_dir);
-    if (uuid != NULL) // Exists onñy one PEM key pair
-    {
-        // Format pub key filename
-        sprintf(pemfile, "%s/%s.key", pem_dir, uuid);
-
-        // Create EC_KEY from PEM file
-        priv_key = EC_KEY_new_by_curve_name(ECCTYPE);
-        get_priv_key_from_pem(pemfile, priv_key);
-        if (priv_key == NULL)
-        {
-            fprintf(stderr, "Failed to read pub key from PEM file: %s\n", pemfile);
-        }
-    }
-
-    return priv_key;
-}*/
-
-/*EC_KEY *get_pub_key(const char *pem_dir)
-{
-    char *pemfile;
-    EC_KEY *pub_key = NULL;
-
-    // Open directory
-    const char *uuid = get_pem_filename(pem_dir);
-    if (uuid != NULL) // Exists onñy one PEM key pair
-    {
-        // Format pub key filename
-        sprintf(pemfile, "%s/%s.pub", pem_dir, uuid);
-
-        // Create EC_KEY from PEM file
-        pub_key = EC_KEY_new_by_curve_name(ECCTYPE);
-        get_pub_key_from_pem(pemfile, pub_key);
-        if (pub_key == NULL)
-        {
-            fprintf(stderr, "Failed to read pub key from PEM file: %s\n", pemfile);
-        }
-    }
-
-    return pub_key;
-}*/
-
-char *get_username_from_uid(uid_t uid)
-{
-    struct passwd *pws;
-    char *username;
-
-    pws = getpwuid(uid);
-    username = pws->pw_name;
-
-    return username;
-}
-
+/**
+ * Sign hash with private key and save both values r and s
+ * @param hash hash value
+ * @param hash_len hash length
+ * @param pem_key private key in PEM format
+ * @return EC_SIGN with both r and s values converted to HEX format
+ */
 struct EC_SIGN sign_hash(const unsigned char *hash, const int hash_len, const char *pem_key)
 {
     int retval = 0;

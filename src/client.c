@@ -1,22 +1,32 @@
+/**
+ * Client side script which run the following steps:
+ * - Subscribe to challenge topic
+ * - Sign challenge hash topic with private key
+ * - Send EC sign values (r and s) in hex to server 
+ */
+
 #include <stdio.h>
 #include <errno.h>
 #include <mosquitto.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #include "../include/crypt.h"
 #include "../include/ecdsa.h"
 #include "../include/utils.h"
 #include "../include/mqtt.h"
 #include "../include/uuid.h"
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
+#include "../include/ssl.h"
 
 // Global vars
 static char uuid[UUID_STR_LEN];
 
-// Mosquitto message callback
+/**
+ * Callback function which run whenever a message is received from a subscribed topic
+ * @param mosq mosquitto instance making the callback
+ * @param obj user data provided in mosquitto_new
+ * @param message the message data
+ */
 void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
     int retval = 0;
@@ -58,23 +68,31 @@ void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
         else
         {
             fprintf(stderr, "Empty challenge\n");
+            exit(1);
         }
     }
     else
     {
         fprintf(stderr, "Unknow topic: %s", message->topic);
+        exit(1);
     }
-
-    mosquitto_message_free((struct mosquitto_message **) message);
-
 }
 
+/**
+ * Link which function to use when using a specific callback
+ * @param mosq mosquitto instance making the callback
+ */
 void set_callbacks(struct mosquitto *mosq)
 {
 	mosquitto_message_callback_set(mosq, message_callback);
 	mosquitto_log_callback_set(mosq, log_callback);
 }
 
+/**
+ * Start client function
+ * @param mosq mosquitto instance
+ * @return status of subscribing to challenge topic
+ */
 int client_start(struct mosquitto *mosq)
 {
     int retval = 0;
@@ -97,53 +115,73 @@ int client_start(struct mosquitto *mosq)
     return retval;
 }
 
-// Main
+/**
+ * Main function
+ * @param argc number of arguments
+ * @param argv array with arguments
+ * @return Success starting client 
+ */
 int main(int argc, char *argv[])
 {
-    if (argc != 4)
+    if (argc != 5)
     {
-        fprintf(stderr, "Usage: ./client <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT> <UUID>\n");
+        fprintf(stderr, "Usage: ./client <BROKER_MQTT_IP_ADDRESS> <BROKER_MQTT_PORT> <UUID> <CA_FILE>\n");
         return 1;
     }
 
     char broker_host[ID_SIZE];
     int broker_port = 0;
     struct mosquitto *client = NULL;
-    int retval = 0;
+    int retval = 1;
+    char cafile[MAX_PATH_LEN];
 
-    // Check host and port
+    // Save broker host and port
     set_buffer(broker_host, ID_SIZE, argv[1]);
     broker_port = atoi(argv[2]);
+
+    // Save UUID
     set_buffer(uuid, UUID_STR_LEN, argv[3]);
+    
+    // Save ca file
+    set_buffer(cafile, MAX_PATH_LEN, argv[4]);
     
     mosquitto_lib_init();
 
     client = mosquitto_new(uuid, true, NULL);
     if (client)
     {
-        set_callbacks(client);
-        if (connect_to_broker(client, broker_host, broker_port) == MOSQ_ERR_SUCCESS)
+        // Set TLS connection
+        if (set_tls_connection(client, cafile) == MOSQ_ERR_SUCCESS)
         {
-            if (client_start(client) != MOSQ_ERR_SUCCESS)
+            set_callbacks(client);
+            if (connect_to_broker(client, broker_host, broker_port) == MOSQ_ERR_SUCCESS)
             {
-               fprintf(stderr, "Unable to start client\n");
-               retval = 1;
+                if (client_start(client) == MOSQ_ERR_SUCCESS)
+                {
+                    mosquitto_loop_start(client);
+                    mosquitto_loop_forever(client, -1, 1);
+                    retval = 0;
+                }
+                else
+                {
+                    fprintf(stderr, "Unable to start client\n");
+                }
+            }
+            else
+            {
+                fprintf(stderr, "Unable to connect to broker\n");
             }
         }
         else
         {
-            fprintf(stderr, "Unable to connect to broker\n");
-            retval =  1;
+            fprintf(stderr, "Unable to set TLS connection\n");
         }
+        mosquitto_destroy(client);
     }
     else
     {
         perror("mosquitto_new");
     }
-
-    mosquitto_loop_start(client);
-    mosquitto_loop_forever(client, -1, 1);
-    mosquitto_destroy(client);
 
     mosquitto_lib_cleanup();
 
