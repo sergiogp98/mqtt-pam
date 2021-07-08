@@ -205,20 +205,48 @@ están definidos en la tabla \ref{tab:bit-len-sec-level}
     \centering
     \begin{tabular}{ |c|c|c| }
         \hline
-        q   & Tamaño hash & Nivel de seguridad \\
+        \textit{Tamaño número primo q} & \textit{Tamaño hash} & \textit{Nivel de seguridad} \\
         \hline
-        192 & 192         & 96                 \\
-        224 & 224         & 112                \\
-        256 & 256         & 128                \\
-        384 & 384         & 192                \\
-        512 & 512         & 256                \\
+        192                            & 192                  & 96                          \\
+        224                            & 224                  & 112                         \\
+        256                            & 256                  & 128                         \\
+        384                            & 384                  & 192                         \\
+        512                            & 512                  & 256                         \\
         \hline
     \end{tabular}
     \caption{Tamaño de bits y nivel de seguridad de ECDSA}
     \label{tab:bit-len-sec-level}
 \end{table}
 
-\subsection{\acf[first-style=short]{pam}}
+El algoritmo ECDSA requiere de claves mas pequeñas para proporcionar la misma robustez que otras como por ejemplo RSA. En la
+tabla \ref{tab:rsa-vs-ecdsa} se detalla la comparación entre claves de ambos algoritmos de encriptación:
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ |c|c|c| }
+        \hline
+        \textit{Tamaño clave RSA} & \textit{Tamaño clave ECDSA} & \textit{Curva ESP\_IDF}        \\
+        \hline
+        1024 bits                 & 160-223 bits                & secp192r1, sec192k1           \\
+        2048 bits                 & 224-255 bits                & secp224r1, sec224k1           \\
+        3072 bits                 & 256-383 bits                & secp256r1, secp256k1, bp256r1 \\
+        7680 bits                 & 384-511 bits                & secp384r1, bp384r1            \\
+        15360 bits                & 512 $\ge$ bits              & sepc512r1, bp512r1            \\
+        \hline
+    \end{tabular}
+    \caption{Comparación de tamaño de claves entre RSA y ECDSA}
+    \label{tab:rsa-vs-ecdsa}
+\end{table}
+
+Para este trabajo se usa la curva de tipo \textit{secp521r1} dada su gran robustez.
+
+Ota gran diferencia entre ECDSA y RSA reside en la funcionalidad ya que este primero solo permite firma mientras que el último
+permite tanto firma como encriptación.
+
+Tambien existe otra variante de algoritmo de curva elíptica, Elliptic-Curve Diffie-Hellman, basado en el algoritmo Diffie-Hellman
+usando curva elíptica y permitiendo el intercambio de un valor de forma segura que pueda ser usado luego en encriptación simétrica.
+
+\subsection{\acf[first-style=long]{pam}}
 
 Tal y como se comentó en la sección \ref{sec:motivacion}, la motivación de este trabajo nace de la propuesta de mejora en 
 \cite{tesisIliaBlockin} basada en implementar en el sistema propuesto la compatibilidad con otros métodos de autenticación como

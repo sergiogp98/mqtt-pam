@@ -160,6 +160,8 @@ El código fuente no se adjunta por simplicidad y limpieza en la memoria pero se
 
 \section{Entorno de virtualización}
 
+\subsection{Vagrant}
+
 Tal y como se ha mencionado en \ref{sec:analisis-herramientas}, en vez de usar un ESP-32 como eToken de autenticación y un servidor 
 físico que recrearía un escenario real, he decido virtualizar el entorno usando máquinas virtuales gracias al programa 
 \textit{open-source} de Oracle \textit{Vagrant}.
@@ -168,12 +170,14 @@ físico que recrearía un escenario real, he decido virtualizar el entorno usand
 desarrollado para que trabajase con entornos que corriesen bajo el hipervisor de \textit{VirtualBox} \cite{virtualbox}, siendo 
 este un software de virtualización desarrollado por la propia Oracle.
 
-Actualmente, $Vagrant$ funciona con otros hpervisores como el de Windows $Hyper-V$, el famoso $VMware$ así como entornos en la 
+Actualmente $Vagrant$ funciona con otros hpervisores como el de Windows $Hyper-V$, el famoso $VMware$ así como entornos en la 
 nube tales como $DigitalOcean$ o $Amazon Web Services$. Está desarrollado en Ruby pero se puede usar en proyectos de diversos 
 lenguajes de programación.
 
 Gracias a su facilidad de despliegue y rapidez a la hora de escalar, me ha permitido crear entornos complejos para probar el 
 sistema propuesto.
+
+\subsection{Despliegue}
 
 $Vagrant$ require de un archivo de tipo \acf[first-style=short]{yaml} para su configuración que se llama $Vagrantfile$. Para este 
 proyecto se ha escrito el siguiente archivo de configuración \ref{code:vagrantfile} compuesto de dos parte:
@@ -182,3 +186,19 @@ proyecto se ha escrito el siguiente archivo de configuración \ref{code:vagrantf
     \item El método $add_ssh_key$ añade la clave pública a la máquina virtual creada
     \item La parte de configuración de las máquinas virtuales: broker MQTT, cliente y servidor
 \end{enumerate}
+
+Para desplegar una máquina virtual en un Vagrantfile se tiene que especificar una serie de parámetros obligatorios:
+
+\begin{itemize}
+    \item Dirección IP privada a usar. Puede ser estática o dinámica (DHCP)
+    \item El \textit{Vagrant Box} \cite{vagrant-boxes}. Esta es la imagen del sistema operativo a usar
+    \item El proveedor (VirtualBox)
+    \item Número y cantidad de memoria CPU
+    \item Nombre del hostname 
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.18]{vagrant-topology.png}
+    \caption{Topología del entorno virtualizado con Vagrant}
+\end{figure}

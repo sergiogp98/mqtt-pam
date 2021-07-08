@@ -10,31 +10,6 @@ criptografía e infraestructuras de clave pública, así como desarrollo en C de
 Además, he aprendido a leer detalladamente artículos científicos y conocer a fondo las bases de un proyecto científico de alto 
 nivel.
 
-\section{Análisis resultados}
-
-En la figura \ref{code:client-script} se ve la salida del script del lado del cliente. Concretamente, los logs del cliente MQTT. 
-Entre medias aparecen dos mensajes: el primero indica que está suscrito el tópico \textit{pam/68263723-e928-4f71-8339-c609478f0a1a/challenge}
-y el segundo que ha recibido el desafío \textit{ITOeM0joCRNR5dm.hWS5O7BaxvE8UdE7SMoPKoQck5WhhYu1di2KrBrxGsG6o76} del servidor.
-
-Por otro lado, la figura \ref{code:ssh-request} muestra la salida de la petición SSH del cliente al servidor. El primer mensaje
-aivsa de que ha encontrado el UUID del cliente y su valor concreto. A continuación muestra los logs del cliente MQTT con respecto 
-a la conexión con el broker MQTT y las subscripciones a ambos tópicos, \textit{68263723-e928-4f71-8339-c609478f0a1a/pam/r} y 
-\textit{68263723-e928-4f71-8339-c609478f0a1a/pam/s}, correspondientes a los valores en hexadecimal de la firma digital de 
-curva elíptica. Posteriormente publica el desafío creado en \textit{pam/68263723-e928-4f71-8339-c609478f0a1a/challenge} y 
-por último los mensajes de recepción. Al final aparece un mensaje de si la firma ha sido verificada o no y por tanto si el 
-valor PAM devuelto es \textit{PAM\_SUCCESS} o \textit{PAM\_AUTH\_ERR}.  
-
-En el lado del servidor, simplemente hay que añadir al archivo de configuración PAM de SSH \ref{code:pam-sshd} la siguiente 
-directiva: \textit{auth required mqtt-pam.so broker.mqtt.com 8883 /etc/mosquitto/ca\_certificates/ca.crt}, donde:
-
-\begin{itemize}
-    \item \textit{auth} indica el tipo de módulo PAM a usar (autenticación)
-    \item \textit{required} indica la política de ejecucion. En este caso, para que se ejecuten el resto de módulos PAM es 
-    necesario que el valor devuelto sea \textit{PAM\_SUCCESS}
-    \item \textit{mqtt-pam.so broker.mqtt.com 8883 /etc/mosquitto/ca\_certificates/ca.crt} indica el módulo y los parámetros. 
-    Al no especificar la ruta absoluta del ejecutable, PAM busca por defecto en \textit{/lib/security/}
-\end{itemize}
-
 \section{Problemas afrontados}
 
 Durante el desarrollo de este proyecto me he topado con diversos problemas. Al principio, me costó mucho entender el funcionamiento
