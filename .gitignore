@@ -31,3 +31,19 @@ obj/
 *.aux
 *.dvi
 
+# Latex files
+*.fdb_latexmk
+*.synctex*
+*.fls
+*.acn
+*.glsdefs
+*.ist
+*.lof
+*.lot
+*.toc
+*.xcp
+*.bbl
+*.blg
+*.glo
+*.acr
+
