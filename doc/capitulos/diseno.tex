@@ -107,8 +107,8 @@ tipos de políticas:
 \end{enumerate}
 
 La política \textit{relax} es útil en casos en los que por ejemplo el usuario provenga de una red de confianza como puede ser una
-Universidad. En ese caso, el módulo PAM propuesto devolvería un $PAM_IGNORE$ pasando el siguiente módulo. En caso de la 
-política \textit{strict}, es necesario ejecutar el proceso de autenticación propuesto y que devuelva un $PAM_SUCCESS$.
+Universidad. En ese caso, el módulo PAM propuesto devolvería un \textit{PAM\_IGNORE} pasando el siguiente módulo. En caso de la 
+política \textit{strict}, es necesario ejecutar el proceso de autenticación propuesto y que devuelva un \textit{PAM\_SUCCESS}.
 
 Una vez que se compruebe el UUID del usuario, si la política es de tipo \textit{strict}, el servidor se subscribe a dos tópicos:
 
@@ -136,8 +136,8 @@ el hash usando la firma generada anteriormente y la clave pública de tal forma 
     \item Si el desafío ha sufrido alguna modificación por la intervención de una tercera persona, la verificación saldrá incorrecta
 \end{itemize}
 
-Una verificación correcta devuelve $PAM_SUCCESS$ mientras que una errónea devuelve $PAM_AUTH_ERR$, siendo estas variables globales
-de la librería de PAM.  
+Una verificación correcta devuelve \textit{PAM\_SUCCESS} mientras que una errónea devuelve \textit{PAM\_AUTH\_ERR}, siendo estas 
+variables globales de la librería de PAM.  
 
 \begin{figure}[H]
     \centering
