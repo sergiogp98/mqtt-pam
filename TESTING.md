@@ -15,7 +15,7 @@ To test this module you need to have installed the following dependancies:
 
 To compile all the scripts: `make all`
 
-## Manualy compile and link PAM file to a libray system file
+## Manually compile and link PAM file to a libray system file
 
 1. Compile using `fPIC` and `fno-stack-protector` arguments: 
 
